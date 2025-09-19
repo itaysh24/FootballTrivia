@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "309596549418",
+    "project_id": "football-trivia-24",
+    "storage_bucket": "football-trivia-24.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:309596549418:android:b0b43f54835237e025ae53",
+        "android_client_info": {
+          "package_name": "com.dev.football_trivia"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHY9MF-SA0aXwCIfJBy23lJTu13qro9uA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:309596549418:android:3d7e689e8bcf918b25ae53",
+        "android_client_info": {
+          "package_name": "com.romulusdev.football_trivia_game"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHY9MF-SA0aXwCIfJBy23lJTu13qro9uA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

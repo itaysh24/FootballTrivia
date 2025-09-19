@@ -1,0 +1,35 @@
+name: football_trivia
+description: "A new Football Trivia mobile app."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  english_words: ^4.0.0
+  provider: ^6.1.5
+  animated_bottom_navigation_bar: ^1.4.0
+  animated_leaderboard: ^0.1.3
+  firebase_core: ^4.1.0
+  firebase_auth: ^6.0.2
+  cloud_firestore: ^6.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/questions.json
+    - assets/images/background.jpg
+    - assets/images/profile11.jpg
+    - assets/images/Logo.png
+    - assets/images/Layer 3.png
+    - assets/images/GUESS THE PLAYER.png
+    - assets/images/QuestionsFrames/

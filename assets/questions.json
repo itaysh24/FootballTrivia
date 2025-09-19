@@ -1,0 +1,73 @@
+[
+    {
+      "answer": "Lionel Messi",
+      "careerPath": [
+        "Barcelona (2004–2021)",
+        "PSG (2021–2023)",
+        "Inter Miami (2023–)"
+      ]
+    },
+    {
+      "answer": "Cristiano Ronaldo",
+      "careerPath": [
+        "Sporting CP (2002–2003)",
+        "Manchester United (2003–2009)",
+        "Real Madrid (2009–2018)",
+        "Juventus (2018–2021)",
+        "Manchester United (2021–2022)",
+        "Al Nassr (2023–)"
+      ]
+    },
+    {
+      "answer": "Mohamed Salah",
+      "careerPath": [
+        "Al-Mokawloon (2010–2012)",
+        "Basel (2012–2014)",
+        "Chelsea (2014–2016)",
+        "Fiorentina (loan) (2015)",
+        "Roma (loan) (2015–2016)",
+        "Roma (2016–2017)",
+        "Liverpool (2017– )"
+      ]
+    },
+    {
+      "answer": "Zlatan Ibrahimovic",
+      "careerPath": [
+        "Malmö FF (1999–2001)",
+        "Ajax (2001–2004)",
+        "Juventus (2004–2006)",
+        "Inter Milan (2006-2009)",
+        "Barcelona (2009-2011)",
+        "AC Milan (loan) (2010-2011)",
+        "AC Milan (2011-2012)",
+        "Paris Saint-Germain (2012-2016)",
+        "Manchester United (2016-2018)",
+        "LA Galaxy (2018-2019)",
+        "AC Milan (2020-2023)"
+      ]
+    },
+    {
+      "answer": "Thierry Henry",
+      "careerPath": [
+        "Monaco B (1994–1995)",
+        "Monaco (1994–1999)",
+        "Juventus (1999)",
+        "Arsenal (1999–2007)",
+        "Barcelona (2007–2010)",
+        "New York Red Bulls (2010–2014)",
+        "Arsenal (loan) (2012)"
+      ]
+    },
+    {
+      "answer": "David Beckham",
+      "careerPath": [
+        "Manchester United (1992–2003)",
+        "Preston North End (loan) (1995)",
+        "Real Madrid (2003–2007)",
+        "LA Galaxy (2007–2012)",
+        "AC Milan (loan) (2009)",
+        "AC Milan (loan) (2010)",
+        "Paris Saint-Germain (2013)"
+      ]
+    }
+  ]
