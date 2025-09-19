@@ -12,21 +12,44 @@ import 'Pages/leaderboard/leaderboard_page.dart';
 import 'Pages/coregame/game_screen.dart';
 // ignore: unused_import
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/music_service.dart';
 
-
-
+// Global music service instance
+final musicService = MusicService();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+   await Supabase.initialize(
+    url: 'https://nuvbzopwnnyvovdohwao.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51dmJ6b3B3bm55dm92ZG9od2FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNjg0ODIsImV4cCI6MjA3Mzg0NDQ4Mn0.d0-9hnS7ahKNKRnZaFJaHQ4_teMMrUGtQnI3QDH24d8',
+  );
   print("✅ Firebase initialized!");
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    musicService.startLooping(); // Start looping through all tracks
+  }
+
+  @override
+  void dispose() {
+    musicService.stop(); // Stop music when app is disposed
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +226,6 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.only(bottom: 80), // Space for navigation bar
@@ -229,14 +251,14 @@ class HomePage extends StatelessWidget {
                 height: 30,
                 width: 350,
               ),
-            const SizedBox(height: 219),
-            ElevatedButton(
-              onPressed: () {
-                // Add your play now logic here
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const GameScreen()),
-                );
+              const SizedBox(height: 219),
+              ElevatedButton(
+                onPressed: () {
+                  // Add your play now logic here
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const GameScreen()),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFA726), // Primary orange
@@ -258,8 +280,9 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
               ),
-              
-              // Quick blur control
+              const SizedBox(height: 20),
+              // Music control button
+            
             ],
           ),
         ),

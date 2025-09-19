@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:football_trivia/models/question_model.dart';
+import '../../main.dart'; // Import to access global music service
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -44,6 +45,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
+    musicService.stopLooping(); // Stop music when entering game
     _initializeGame();
   }
 
@@ -63,6 +65,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    musicService.startLooping(); // Resume music when leaving game
     super.dispose();
   }
 
