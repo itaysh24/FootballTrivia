@@ -148,4 +148,14 @@ class MusicService {
     _playerSubscription?.cancel();
     _player.stop();
   }
+
+  void pause() {
+    _player.pause();
+  }
+
+  void resume() {
+    if (_isLooping && _player.processingState != ProcessingState.completed) {
+      _player.play();
+    }
+  }
 }

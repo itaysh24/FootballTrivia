@@ -11,7 +11,7 @@ import 'Pages/profile/profile_page.dart';
 import 'Pages/leaderboard/leaderboard_page.dart';
 import 'Pages/coregame/game_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../services/music_service.dart';
+import 'services/music_service.dart';
 
 // Global music service instance
 final musicService = MusicService();
@@ -44,17 +44,41 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     musicService.startLooping(); // Start looping through all tracks
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     musicService.stop(); // Stop music when app is disposed
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+        // Pause music when app goes to background
+        musicService.pause();
+        break;
+      case AppLifecycleState.resumed:
+        // Resume music when app comes back to foreground
+        musicService.resume();
+        break;
+      case AppLifecycleState.detached:
+        // Stop music only when app is completely closed
+        musicService.stop();
+        break;
+    }
   }
 
   @override
