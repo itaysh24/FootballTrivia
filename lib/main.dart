@@ -10,8 +10,6 @@ import 'firebase_options.dart';
 import 'Pages/profile/profile_page.dart';
 import 'Pages/leaderboard/leaderboard_page.dart';
 import 'Pages/coregame/game_screen.dart';
-// ignore: unused_import
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/music_service.dart';
 
@@ -28,12 +26,20 @@ void main() async {
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51dmJ6b3B3bm55dm92ZG9od2FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNjg0ODIsImV4cCI6MjA3Mzg0NDQ4Mn0.d0-9hnS7ahKNKRnZaFJaHQ4_teMMrUGtQnI3QDH24d8',
   );
   print("✅ Firebase initialized!");
-  runApp(MyApp());
+  final musicService = MusicService();
+  await musicService.preloadAllTracks();
+  runApp(MyApp(musicService: musicService));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-
+  final MusicService musicService;
+  const MyApp({super.key, required this.musicService});
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: HomePage(musicService: musicService),
+    );
+  }
   @override
   State<MyApp> createState() => _MyAppState();
 }
@@ -188,14 +194,88 @@ class _MyHomePageState extends State<MyHomePage> {
                   : Container(),
             ),
           ),
-          // Content overlay (not blurred)
-          page,
-          // Navigation bar overlay
+          // Content overlay (not blurred) with padding for glass header and navigation bar
+          Positioned(
+            top: 40, // Height of glass header
+            left: 0,
+            right: 0,
+            bottom: 1, // Height of navigation bar + SafeArea
+            child: page,
+          ),
+          // Glass header with SafeArea
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(20),
+                  ),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      const Color.fromARGB(120, 33, 43, 31), // Semi-transparent dark
+                      const Color.fromARGB(60, 33, 43, 31),  // More transparent
+                      Colors.transparent, // Fully transparent at bottom
+                    ],
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(20),
+                  ),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 5),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(20),
+                        ),
+                        color: Colors.white.withOpacity(0.1),
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.white.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () => musicService.nextSong(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange.withOpacity(0.8),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: const Text("Next Song"),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Navigation bar overlay with SafeArea
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: AnimatedBottomNavigationBar(
+            child: SafeArea(
+              child: AnimatedBottomNavigationBar(
               icons: iconList,
               activeIndex: selectedIndex,
               gapLocation: GapLocation.none,
@@ -212,6 +292,7 @@ class _MyHomePageState extends State<MyHomePage> {
               backgroundColor: const Color.fromARGB(230, 33, 43, 31), // Semi-transparent dark background
               splashColor: const Color(0xFFFFA726), // Orange splash effect
               iconSize: 24,
+              ),
             ),
           ),
         ],
@@ -222,7 +303,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final MusicService? musicService; // Add this line
+  const HomePage({super.key, this.musicService});
 
   @override
   Widget build(BuildContext context) {
@@ -252,36 +334,40 @@ class HomePage extends StatelessWidget {
                 width: 350,
               ),
               const SizedBox(height: 219),
-              ElevatedButton(
-                onPressed: () {
-                  // Add your play now logic here
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const GameScreen()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFA726), // Primary orange
-                  foregroundColor: Colors.black, // Black text
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 16,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      // Add your play now logic here
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const GameScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFA726), // Primary orange
+                      foregroundColor: Colors.black, // Black text
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 8,
+                    ),
+                    child: const Text(
+                      'Play Now',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 8,
-                ),
-                child: const Text(
-                  'Play Now',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                ],
               ),
               const SizedBox(height: 20),
-              // Music control button
             
             ],
           ),
