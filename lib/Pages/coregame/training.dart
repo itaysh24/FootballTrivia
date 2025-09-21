@@ -282,8 +282,8 @@ class _GameScreenState extends State<GameScreen> {
     final screenW = MediaQuery.of(context).size.width;
     
     // Define a safe zone for placeholders (90% of screen width)
-    final safeZoneWidth = screenW * 0.9;
-    final safeZonePadding = (screenW - safeZoneWidth) / 2; // Center the zone
+    final safeZoneWidth = screenW;
+    final safeZonePadding = (screenW - safeZoneWidth); // Center the zone
     
     // Find the row that needs the most space (longest name)
     final maxNameLength = max(firstNameLength, lastNameLength);

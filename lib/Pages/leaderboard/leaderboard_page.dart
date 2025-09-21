@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../leaderboard/leaderboard_container.dart';
+import 'leaderboard_container.dart';
 import '../../models/player.dart';
 
 class LeaderboardPage extends StatefulWidget {

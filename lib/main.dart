@@ -8,10 +8,11 @@ import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.da
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'Pages/profile/profile_page.dart';
-import 'Pages/leaderboard/leaderboard_page.dart';
-import 'Pages/coregame/game_screen.dart';
+import 'pages/leaderboard/leaderboard_page.dart';
+import 'pages/training/training_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/music_service.dart';
+import 'pages/game_modes/game_modes_main.dart';
 
 // Global music service instance
 final musicService = MusicService();
@@ -108,6 +109,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           ),
         ),
         home: MyHomePage(),
+        routes: {
+      '/game_modes': (context) => const GameModesPage(),
+      '/training': (context) => const TrainingScreen(), // your training mode
+        },
       ),
     );
   }
@@ -366,7 +371,7 @@ class HomePage extends StatelessWidget {
                       // Add your play now logic here
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const GameScreen()),
+                        MaterialPageRoute(builder: (context) => const TrainingScreen()),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -401,16 +406,6 @@ class HomePage extends StatelessWidget {
   }
 }
 
-
-
-class GameModesPage extends StatelessWidget {
- @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('Game modes Page'),
-    );
-  }
-}
 
 
 class ShopPage extends StatelessWidget {
