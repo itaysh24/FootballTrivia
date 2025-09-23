@@ -12,12 +12,11 @@ dependencies:
   english_words: ^4.0.0
   provider: ^6.1.5
   animated_bottom_navigation_bar: ^1.4.0
-  animated_leaderboard: ^0.1.3
-  firebase_core: ^4.1.0
-  firebase_auth: ^6.0.2
-  cloud_firestore: ^6.0.1
+  animated_leaderboard: ^0.1.4
   supabase_flutter: ^2.3.4
-  just_audio: ^0.9.37
+  just_audio: ^0.10.5
+  speech_to_text: ^7.3.0
+  
 
 dev_dependencies:
   flutter_test:

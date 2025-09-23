@@ -4,9 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
-  cloud_firestore
-  firebase_auth
-  firebase_core
+  speech_to_text_windows
   url_launcher_windows
 )
 

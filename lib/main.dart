@@ -5,28 +5,23 @@ import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'Pages/profile/profile_page.dart';
 import 'pages/leaderboard/leaderboard_page.dart';
 import 'pages/training/training_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/music_service.dart';
 import 'pages/game_modes/game_modes_main.dart';
+import 'pages/voice_trivia.dart';
 
 // Global music service instance
 final musicService = MusicService();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
    await Supabase.initialize(
     url: 'https://nuvbzopwnnyvovdohwao.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51dmJ6b3B3bm55dm92ZG9od2FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNjg0ODIsImV4cCI6MjA3Mzg0NDQ4Mn0.d0-9hnS7ahKNKRnZaFJaHQ4_teMMrUGtQnI3QDH24d8',
   );
-  print("✅ Firebase initialized!");
   final musicService = MusicService();
   await musicService.preloadAllTracks();
   runApp(MyApp(musicService: musicService));
@@ -112,6 +107,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         routes: {
       '/game_modes': (context) => const GameModesPage(),
       '/training': (context) => const TrainingScreen(), // your training mode
+      '/voice_trivia': (context) => const VoiceTriviaPage(),
         },
       ),
     );

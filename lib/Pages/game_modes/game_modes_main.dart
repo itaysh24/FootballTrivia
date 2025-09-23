@@ -46,6 +46,14 @@ class GameModesPage extends StatelessWidget {
                         Navigator.pushNamed(context, "/training");
                       },
                     ),
+                    GameModeCard(
+                      title: "Voice Trivia",
+                      description: "Answer questions using your voice.",
+                      locked: false,
+                      onTap: () {
+                        Navigator.pushNamed(context, "/voice_trivia");
+                      },
+                    ),
                   ],
                 ),
               ),
