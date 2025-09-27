@@ -16,6 +16,7 @@ dependencies:
   supabase_flutter: ^2.3.4
   just_audio: ^0.10.5
   speech_to_text: ^7.3.0
+  shared_preferences: ^2.2.2
   
 
 dev_dependencies:

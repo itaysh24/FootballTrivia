@@ -12,6 +12,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/music_service.dart';
 import 'pages/game_modes/game_modes_main.dart';
 import 'pages/voice_trivia.dart';
+import 'pages/training/tutorial_screen.dart';
+import 'widgets/tutorial_popup.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Global music service instance
 final musicService = MusicService();
@@ -108,6 +111,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       '/game_modes': (context) => const GameModesPage(),
       '/training': (context) => const TrainingScreen(), // your training mode
       '/voice_trivia': (context) => const VoiceTriviaPage(),
+      '/tutorial': (context) => const TutorialScreen(),
         },
       ),
     );
@@ -156,6 +160,44 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 0;
+  
+  @override
+  void initState() {
+    super.initState();
+    _checkTutorialPopup();
+  }
+
+  Future<void> _checkTutorialPopup() async {
+    final prefs = await SharedPreferences.getInstance();
+    final skipTutorialPopup = prefs.getBool('skipTutorialPopup') ?? false;
+
+    if (!skipTutorialPopup) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) {
+            return TutorialPopup(
+              onYes: () {
+                Navigator.of(context).pop();
+                Navigator.pushReplacementNamed(context, '/tutorial');
+              },
+              onNo: () {
+                Navigator.of(context).pop();
+                // Stay on current page (HomePage)
+              },
+              onNoRemember: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('skipTutorialPopup', true);
+                Navigator.of(context).pop();
+                // Stay on current page (HomePage)
+              },
+            );
+          },
+        );
+      });
+    }
+  }
   
   @override
   Widget build(BuildContext context) {

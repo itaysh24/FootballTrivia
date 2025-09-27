@@ -1,29 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileActions extends StatelessWidget {
   const ProfileActions({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
-        ProfileActionButton(
-          label: "Add Friend",
-          icon: Icons.person_add_alt_1,
-          heroTag: 'Add Friend',
-          onPressed: () {
-            // Add friend logic here
-          },
+        // Main action buttons row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ProfileActionButton(
+              label: "Add Friend",
+              icon: Icons.person_add_alt_1,
+              heroTag: 'Add Friend',
+              onPressed: () {
+                // Add friend logic here
+              },
+            ),
+            const SizedBox(width: 16.0),
+            ProfileActionButton(
+              label: "Challenge",
+              icon: Icons.sports_score,
+              heroTag: 'Challenge',
+              backgroundColor: Colors.red,
+              onPressed: () {
+                // Challenge logic here
+              },
+            ),
+          ],
         ),
-        const SizedBox(width: 16.0),
+        const SizedBox(height: 16.0),
+        // Reset tutorial button in separate row
         ProfileActionButton(
-          label: "Challenge",
-          icon: Icons.sports_score,
-          heroTag: 'Challenge',
-          backgroundColor: Colors.red,
-          onPressed: () {
-            // Challenge logic here
+          label: "Reset Tutorial",
+          icon: Icons.refresh,
+          heroTag: 'Reset Tutorial',
+          backgroundColor: Colors.orange,
+          onPressed: () async {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool('skipTutorialPopup', false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Tutorial will show on next app launch'),
+                backgroundColor: Colors.green,
+              ),
+            );
           },
         ),
       ],
