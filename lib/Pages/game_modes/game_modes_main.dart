@@ -31,7 +31,10 @@ class GameModesPage extends StatelessWidget {
                     GameModeCard(
                       title: "Road to Glory",
                       description: "Embark on the ultimate career journey.",
-                      locked: true,
+                      locked: false,
+                      onTap: () {
+                        Navigator.pushNamed(context, '/road_to_glory');
+                      },
                     ),
                     GameModeCard(
                       title: "Time Rush",

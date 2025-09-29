@@ -15,6 +15,7 @@ import 'pages/voice_trivia.dart';
 import 'pages/training/tutorial_screen.dart';
 import 'widgets/tutorial_popup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'pages/road_to_glory.dart';
 
 // Global music service instance
 final musicService = MusicService();
@@ -112,6 +113,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       '/training': (context) => const TrainingScreen(), // your training mode
       '/voice_trivia': (context) => const VoiceTriviaPage(),
       '/tutorial': (context) => const TutorialScreen(),
+      '/road_to_glory': (context) => const RoadToGloryScreen(),
         },
       ),
     );
