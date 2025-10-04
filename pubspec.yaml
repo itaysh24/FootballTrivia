@@ -17,6 +17,10 @@ dependencies:
   just_audio: ^0.10.5
   speech_to_text: ^7.3.0
   shared_preferences: ^2.2.2
+  glossy: ^0.0.5
+  infinite_carousel: ^1.0.2
+  xml: ^6.5.0
+
   
 
 dev_dependencies:
@@ -36,3 +40,5 @@ flutter:
     - assets/images/GUESS THE PLAYER.png
     - assets/images/QuestionsFrames/
     - assets/images/backgrounds/
+    - assets/images/Leagues/
+    - assets/images/maps/

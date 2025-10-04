@@ -15,7 +15,7 @@ import 'pages/voice_trivia.dart';
 import 'pages/training/tutorial_screen.dart';
 import 'widgets/tutorial_popup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'pages/road_to_glory.dart';
+import 'pages/RTG/road_to_glory.dart';
 
 // Global music service instance
 final musicService = MusicService();

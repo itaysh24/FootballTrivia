@@ -240,6 +240,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.4"
+  glossy:
+    dependency: "direct main"
+    description:
+      name: glossy
+      sha256: "70c7626430a23b903755766d161f024d93334f2b06d7b96f6b6c7204aa0b8941"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.5"
   gotrue:
     dependency: transitive
     description:
@@ -272,6 +280,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
+  infinite_carousel:
+    dependency: "direct main"
+    description:
+      name: infinite_carousel
+      sha256: "572967b028f4803e5f4be9adee5760b6c4834eb6912b0f2292f2d93a51912ba0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
   json_annotation:
     dependency: transitive
     description:
@@ -902,7 +918,7 @@ packages:
     source: hosted
     version: "1.1.0"
   xml:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: xml
       sha256: "971043b3a0d3da28727e40ed3e0b5d18b742fa5a68665cca88e74b7876d5e025"
