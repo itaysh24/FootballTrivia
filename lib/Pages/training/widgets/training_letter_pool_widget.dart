@@ -25,24 +25,27 @@ class TrainingLetterPoolWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     const maxRows = 3;
     final availableWidth = screenWidth - 20; // Reduced padding for more space
-    
+
     // Calculate optimal distribution across max 3 rows
     final lettersPerRow = (pool.length / maxRows).ceil();
     final actualRows = (pool.length / lettersPerRow).ceil();
     final finalRows = actualRows > maxRows ? maxRows : actualRows;
     final finalLettersPerRow = (pool.length / finalRows).ceil();
-    
+
     // Calculate button size to fit within screen bounds - bigger letters
-    final buttonSize = (availableWidth / finalLettersPerRow - 6).clamp(30.0, 50.0);
+    final buttonSize = (availableWidth / finalLettersPerRow - 6).clamp(
+      30.0,
+      50.0,
+    );
     final fontSize = (buttonSize * 0.45).clamp(12.0, 20.0);
-    
+
     // Split pool into rows
     final rows = <List<dynamic>>[];
     for (int i = 0; i < pool.length; i += finalLettersPerRow) {
       final endIndex = (i + finalLettersPerRow).clamp(0, pool.length);
       rows.add(pool.sublist(i, endIndex));
     }
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -55,10 +58,7 @@ class TrainingLetterPoolWidget extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -71,7 +71,7 @@ class TrainingLetterPoolWidget extends StatelessWidget {
         children: rows.asMap().entries.map((rowEntry) {
           final rowIndex = rowEntry.key;
           final row = rowEntry.value;
-          
+
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 3),
             child: Row(
@@ -80,11 +80,11 @@ class TrainingLetterPoolWidget extends StatelessWidget {
                 final index = entry.key;
                 final item = entry.value;
                 final globalIndex = rowIndex * finalLettersPerRow + index;
-                
+
                 // Access properties dynamically
                 final char = item.char as String;
                 final used = item.used as bool;
-                
+
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   child: _buildLetterButton(
@@ -126,10 +126,7 @@ class TrainingLetterPoolWidget extends StatelessWidget {
                         Colors.grey.withOpacity(0.3),
                         Colors.grey.withOpacity(0.1),
                       ]
-                    : [
-                        Colors.orange,
-                        Colors.orange.shade700,
-                      ],
+                    : [Colors.orange, Colors.orange.shade700],
               ),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(

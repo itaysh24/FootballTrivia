@@ -24,14 +24,16 @@ class TutorialPopup extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              const Color.fromARGB(120, 33, 43, 31), // Semi-transparent dark green
+              const Color.fromARGB(
+                120,
+                33,
+                43,
+                31,
+              ), // Semi-transparent dark green
               const Color.fromARGB(100, 33, 43, 31), // More transparent
             ],
           ),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.2),
-            width: 1,
-          ),
+          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
@@ -68,7 +70,9 @@ class TutorialPopup extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: onYes,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFA726), // Primary orange
+                        backgroundColor: const Color(
+                          0xFFFFA726,
+                        ), // Primary orange
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -92,7 +96,9 @@ class TutorialPopup extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: onNo,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF26C6DA), // Secondary teal
+                        backgroundColor: const Color(
+                          0xFF26C6DA,
+                        ), // Secondary teal
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(

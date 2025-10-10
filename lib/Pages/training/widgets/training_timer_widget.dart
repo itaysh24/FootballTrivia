@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 class TrainingTimerWidget extends StatelessWidget {
   final int secondsLeft;
 
-  const TrainingTimerWidget({
-    super.key,
-    required this.secondsLeft,
-  });
+  const TrainingTimerWidget({super.key, required this.secondsLeft});
 
   String _formatTime(int seconds) {
     final s = seconds % 60;
@@ -35,10 +32,7 @@ class TrainingTimerWidget extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -50,11 +44,7 @@ class TrainingTimerWidget extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.timer_outlined,
-            color: _getTimerColor(),
-            size: 20,
-          ),
+          Icon(Icons.timer_outlined, color: _getTimerColor(), size: 20),
           const SizedBox(width: 8),
           Text(
             _formatTime(secondsLeft),

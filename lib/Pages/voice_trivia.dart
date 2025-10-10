@@ -36,10 +36,8 @@ class _VoiceTriviaPageState extends State<VoiceTriviaPage> {
   }
 
   Future<void> _getTotalQuestions() async {
-    final countResponse = await _supabase
-        .from('questions')
-        .select('id');
-    
+    final countResponse = await _supabase.from('questions').select('id');
+
     _totalQuestions = countResponse.length;
   }
 
@@ -125,7 +123,7 @@ class _VoiceTriviaPageState extends State<VoiceTriviaPage> {
     try {
       // Try to parse as JSON
       final Map<String, dynamic> questionData = json.decode(questionText);
-      
+
       // Extract teams if they exist
       if (questionData.containsKey('teams')) {
         final teams = questionData['teams'];
@@ -134,7 +132,7 @@ class _VoiceTriviaPageState extends State<VoiceTriviaPage> {
           return formattedTeams;
         }
       }
-      
+
       // If no teams structure, return as is
       return questionText;
     } catch (e) {
@@ -143,7 +141,7 @@ class _VoiceTriviaPageState extends State<VoiceTriviaPage> {
         final parts = questionText.split(',');
         return parts.map((part) => '• ${part.trim()}').join('\n');
       }
-      
+
       // If no commas, return as is
       return questionText;
     }
@@ -166,30 +164,32 @@ class _VoiceTriviaPageState extends State<VoiceTriviaPage> {
     try {
       // Try to parse as JSON
       final Map<String, dynamic> questionData = json.decode(_question!);
-      
+
       // Extract teams if they exist
       if (questionData.containsKey('teams')) {
         final teams = questionData['teams'];
         if (teams is List) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: teams.map<Widget>((team) => 
-              Text(
-                '• $team',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 1.1,
-                ),
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.visible,
-              ),
-            ).toList(),
+            children: teams
+                .map<Widget>(
+                  (team) => Text(
+                    '• $team',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 1.1,
+                    ),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.visible,
+                  ),
+                )
+                .toList(),
           );
         }
       }
-      
+
       // If no teams structure, return as single text
       return Text(
         _question!,
@@ -207,22 +207,24 @@ class _VoiceTriviaPageState extends State<VoiceTriviaPage> {
         final parts = _question!.split(',');
         return Column(
           crossAxisAlignment: CrossAxisAlignment.center,
-          children: parts.map<Widget>((part) => 
-            Text(
-              '• ${part.trim()}',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 1.1,
-              ),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.visible,
-            ),
-          ).toList(),
+          children: parts
+              .map<Widget>(
+                (part) => Text(
+                  '• ${part.trim()}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.1,
+                  ),
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.visible,
+                ),
+              )
+              .toList(),
         );
       }
-      
+
       // If no commas, return as single text
       return Text(
         _question!,
@@ -282,9 +284,7 @@ class _VoiceTriviaPageState extends State<VoiceTriviaPage> {
           // Blur overlay
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-            child: Container(
-              color: Colors.black.withOpacity(0.3),
-            ),
+            child: Container(color: Colors.black.withOpacity(0.3)),
           ),
           // Content
           Center(
@@ -317,7 +317,7 @@ class _VoiceTriviaPageState extends State<VoiceTriviaPage> {
                         // Question
                         _buildFormattedQuestion(),
                         const SizedBox(height: 40),
-                        
+
                         // Microphone button
                         GestureDetector(
                           onTap: _toggleListening,
@@ -325,8 +325,8 @@ class _VoiceTriviaPageState extends State<VoiceTriviaPage> {
                             width: 100,
                             height: 100,
                             decoration: BoxDecoration(
-                              color: _isListening 
-                                  ? Colors.green.shade600 
+                              color: _isListening
+                                  ? Colors.green.shade600
                                   : const Color(0xFF2E7D32), // Deep green
                               shape: BoxShape.circle,
                               boxShadow: [
@@ -345,29 +345,34 @@ class _VoiceTriviaPageState extends State<VoiceTriviaPage> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        
+
                         // Status text
                         Text(
                           _isListening ? "Listening..." : "Tap to Answer",
                           style: TextStyle(
                             fontSize: 16,
-                            color: _isListening ? Colors.green.shade300 : Colors.white70,
+                            color: _isListening
+                                ? Colors.green.shade300
+                                : Colors.white70,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        
+
                         // Feedback
                         if (_feedback != null) ...[
                           const SizedBox(height: 20),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
-                              color: _feedback!.startsWith('✅') 
+                              color: _feedback!.startsWith('✅')
                                   ? Colors.green.withOpacity(0.2)
                                   : Colors.red.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: _feedback!.startsWith('✅') 
+                                color: _feedback!.startsWith('✅')
                                     ? Colors.green.shade300
                                     : Colors.red.shade300,
                                 width: 1,
@@ -377,7 +382,7 @@ class _VoiceTriviaPageState extends State<VoiceTriviaPage> {
                               _feedback!,
                               style: TextStyle(
                                 fontSize: 16,
-                                color: _feedback!.startsWith('✅') 
+                                color: _feedback!.startsWith('✅')
                                     ? Colors.green.shade300
                                     : Colors.red.shade300,
                                 fontWeight: FontWeight.w600,
@@ -386,7 +391,7 @@ class _VoiceTriviaPageState extends State<VoiceTriviaPage> {
                             ),
                           ),
                         ],
-                        
+
                         // Next question button
                         if (_feedback != null) ...[
                           const SizedBox(height: 20),
@@ -395,7 +400,10 @@ class _VoiceTriviaPageState extends State<VoiceTriviaPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFFFA726),
                               foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),

@@ -21,7 +21,7 @@ class VoiceService {
         }
       },
       listenFor: const Duration(seconds: 15), // max time per question
-      pauseFor: const Duration(seconds: 3),  // stops after 2s silence
+      pauseFor: const Duration(seconds: 3), // stops after 2s silence
       partialResults: false,
       localeId: "en_US", // adjust for language
     );

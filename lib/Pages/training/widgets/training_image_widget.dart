@@ -15,7 +15,7 @@ class TrainingImageWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageSize = min(220, screenWidth * 0.55);
-    
+
     return Center(
       child: Container(
         width: imageSize.toDouble(),
@@ -30,10 +30,7 @@ class TrainingImageWidget extends StatelessWidget {
               Colors.white.withOpacity(0.05),
             ],
           ),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.2),
-            width: 2,
-          ),
+          border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.3),

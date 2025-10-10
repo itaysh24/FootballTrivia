@@ -13,7 +13,12 @@ class LevelPoint {
   final double y;
   final int id;
   final bool locked;
-  LevelPoint({required this.x, required this.y, required this.id, this.locked = false});
+  LevelPoint({
+    required this.x,
+    required this.y,
+    required this.id,
+    this.locked = false,
+  });
 }
 
 /// Color configuration for different leagues
@@ -22,14 +27,14 @@ class LeagueColors {
   final Color lockedColor;
   final Color borderColor;
   final Color textColor;
-  
+
   const LeagueColors({
     required this.unlockedColor,
     required this.lockedColor,
     required this.borderColor,
     required this.textColor,
   });
-  
+
   // Predefined color schemes for different leagues
   static const LeagueColors english = LeagueColors(
     unlockedColor: Color.fromARGB(255, 255, 255, 255), // White
@@ -37,28 +42,28 @@ class LeagueColors {
     borderColor: Color.fromARGB(255, 68, 0, 255), // Purple
     textColor: Color.fromARGB(255, 0, 0, 255), // Blue
   );
-  
+
   static const LeagueColors spanish = LeagueColors(
     unlockedColor: Color.fromARGB(255, 255, 215, 0), // Gold
     lockedColor: Colors.grey,
     borderColor: Color.fromARGB(255, 255, 0, 0), // Red
     textColor: Color.fromARGB(255, 255, 255, 255), // White
   );
-  
+
   static const LeagueColors german = LeagueColors(
     unlockedColor: Color.fromARGB(255, 255, 255, 0), // Yellow
     lockedColor: Colors.grey,
     borderColor: Color.fromARGB(255, 0, 0, 0), // Black
     textColor: Color.fromARGB(255, 0, 0, 0), // Black
   );
-  
+
   static const LeagueColors italian = LeagueColors(
     unlockedColor: Color.fromARGB(255, 0, 255, 0), // Green
     lockedColor: Colors.grey,
     borderColor: Color.fromARGB(255, 255, 255, 255), // White
     textColor: Color.fromARGB(255, 0, 0, 0), // Black
   );
-  
+
   static const LeagueColors french = LeagueColors(
     unlockedColor: Color.fromARGB(255, 0, 0, 255), // Blue
     lockedColor: Colors.grey,
@@ -86,13 +91,18 @@ class SvgMapData {
   /// Parse SVG from raw string
   static SvgMapData parseFromString(String svgString) {
     final doc = xml.XmlDocument.parse(svgString);
-    final svgElem = doc.findAllElements('svg').isNotEmpty ? doc.findAllElements('svg').first : doc.rootElement;
+    final svgElem = doc.findAllElements('svg').isNotEmpty
+        ? doc.findAllElements('svg').first
+        : doc.rootElement;
 
     // Extract viewBox or width/height info
     double minX = 0, minY = 0, vbW = 0, vbH = 0;
     final viewBox = svgElem.getAttribute('viewBox');
     if (viewBox != null) {
-      final parts = viewBox.split(RegExp(r'[\s,]+')).map((s) => double.tryParse(s) ?? 0.0).toList();
+      final parts = viewBox
+          .split(RegExp(r'[\s,]+'))
+          .map((s) => double.tryParse(s) ?? 0.0)
+          .toList();
       if (parts.length == 4) {
         minX = parts[0];
         minY = parts[1];
@@ -108,6 +118,7 @@ class SvgMapData {
       if (m == null) return 0.0;
       return double.parse(m.group(1)!);
     }
+
     if (vbW == 0 || vbH == 0) {
       vbW = parseDim(svgElem.getAttribute('width'));
       vbH = parseDim(svgElem.getAttribute('height'));
@@ -122,7 +133,13 @@ class SvgMapData {
       points.add(LevelPoint(x: cx - minX, y: cy - minY, id: points.length));
     }
 
-    return SvgMapData(points: points, viewMinX: minX, viewMinY: minY, viewWidth: vbW, viewHeight: vbH);
+    return SvgMapData(
+      points: points,
+      viewMinX: minX,
+      viewMinY: minY,
+      viewWidth: vbW,
+      viewHeight: vbH,
+    );
   }
 
   /// Load from asset path
@@ -139,8 +156,8 @@ class LevelMap extends StatelessWidget {
   final String? backgroundImage;
 
   const LevelMap({
-    super.key, 
-    required this.mapData, 
+    super.key,
+    required this.mapData,
     required this.markerBuilder,
     this.backgroundImage,
   });
@@ -155,10 +172,7 @@ class LevelMap extends StatelessWidget {
           // Background map image if provided
           if (backgroundImage != null)
             Positioned.fill(
-              child: Image.asset(
-                backgroundImage!,
-                fit: BoxFit.cover,
-              ),
+              child: Image.asset(backgroundImage!, fit: BoxFit.cover),
             ),
           // Level points
           for (final point in mapData.points)
@@ -181,10 +195,10 @@ class DefaultMarker extends StatelessWidget {
   final Color? lockedColor;
   final Color? borderColor;
   final Color? textColor;
-  
+
   const DefaultMarker({
-    super.key, 
-    required this.id, 
+    super.key,
+    required this.id,
     this.locked = false,
     this.unlockedColor,
     this.lockedColor,
@@ -199,13 +213,15 @@ class DefaultMarker extends StatelessWidget {
     final defaultLockedColor = Colors.grey.shade600;
     final defaultBorderColor = const Color.fromARGB(255, 68, 0, 255);
     final defaultTextColor = const Color.fromARGB(255, 0, 0, 255);
-    
+
     return Container(
       width: 35,
       height: 35,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: locked ? (lockedColor ?? defaultLockedColor) : (unlockedColor ?? defaultUnlockedColor),
+        color: locked
+            ? (lockedColor ?? defaultLockedColor)
+            : (unlockedColor ?? defaultUnlockedColor),
         shape: BoxShape.circle,
         border: Border.all(color: borderColor ?? defaultBorderColor, width: 3),
         boxShadow: [
@@ -217,7 +233,7 @@ class DefaultMarker extends StatelessWidget {
         ],
       ),
       child: Text(
-        '$id', 
+        '$id',
         style: TextStyle(
           color: textColor ?? defaultTextColor,
           fontWeight: FontWeight.bold,

@@ -20,6 +20,7 @@ dependencies:
   glossy: ^0.0.5
   infinite_carousel: ^1.0.2
   xml: ^6.5.0
+  permission_handler: ^12.0.1
 
   
 

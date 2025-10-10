@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 class TrainingScoreWidget extends StatelessWidget {
   final int score;
 
-  const TrainingScoreWidget({
-    super.key,
-    required this.score,
-  });
+  const TrainingScoreWidget({super.key, required this.score});
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +20,7 @@ class TrainingScoreWidget extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.orange.withOpacity(0.4),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.orange.withOpacity(0.4), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.orange.withOpacity(0.2),
@@ -38,11 +32,7 @@ class TrainingScoreWidget extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.stars_rounded,
-            color: Colors.amber,
-            size: 20,
-          ),
+          const Icon(Icons.stars_rounded, color: Colors.amber, size: 20),
           const SizedBox(width: 8),
           Text(
             '$score',

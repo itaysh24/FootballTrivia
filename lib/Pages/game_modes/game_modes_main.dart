@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'game_mode_card.dart';
+import '../../core/game_modes_manager.dart';
 
 class GameModesPage extends StatelessWidget {
   const GameModesPage({super.key});
@@ -25,21 +26,36 @@ class GameModesPage extends StatelessWidget {
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Column(
                   children: [
+                    GameModeCard(
+                      title: "Casual Mode",
+                      description: "Relax and enjoy football trivia at your pace.",
+                      locked: false,
+                      onTap: () {
+                        GameModeNavigator.startCasualMode(context);
+                      },
+                    ),
                     GameModeCard(
                       title: "Road to Glory",
                       description: "Embark on the ultimate career journey.",
                       locked: false,
                       onTap: () {
+                        // Keep existing navigation to Road to Glory map
                         Navigator.pushNamed(context, '/road_to_glory');
                       },
                     ),
                     GameModeCard(
-                      title: "Time Rush",
-                      description: "Beat the clock and score big.",
-                      locked: true,
+                      title: "Rush Mode",
+                      description: "Answer 50 questions in 2 minutes!",
+                      locked: false,
+                      onTap: () {
+                        GameModeNavigator.startRushMode(context);
+                      },
                     ),
                     GameModeCard(
                       title: "Training",
@@ -49,14 +65,7 @@ class GameModesPage extends StatelessWidget {
                         Navigator.pushNamed(context, "/training");
                       },
                     ),
-                    GameModeCard(
-                      title: "Voice Trivia",
-                      description: "Answer questions using your voice.",
-                      locked: false,
-                      onTap: () {
-                        Navigator.pushNamed(context, "/voice_trivia");
-                      },
-                    ),
+                    
                   ],
                 ),
               ),

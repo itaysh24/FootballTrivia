@@ -24,24 +24,27 @@ class TrainingSlotsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final firstNameLength = firstName.length;
     final lastNameLength = lastName.length;
-    
+
     // Define a safe zone for placeholders (85% of screen width) - more space
     final safeZoneWidth = screenWidth * 0.85;
     final safeZonePadding = (screenWidth - safeZoneWidth) / 2;
-    
+
     // Find the row that needs the most space (longest name)
     final maxNameLength = max(firstNameLength, lastNameLength);
-    
+
     // Calculate slot size to fit within the safe zone
     // Account for margins between slots (4px each side = 8px per slot)
     final slotSize = (safeZoneWidth - (maxNameLength * 8)) / maxNameLength;
-    
+
     // Clamp to reasonable bounds
     final finalSlotSize = slotSize.clamp(18.0, 55.0);
 
     return Container(
       width: safeZoneWidth,
-      margin: EdgeInsets.only(left: safeZonePadding - 20, right: safeZonePadding + 20),
+      margin: EdgeInsets.only(
+        left: safeZonePadding - 20,
+        right: safeZonePadding + 20,
+      ),
       child: Column(
         children: [
           // First name row
@@ -80,7 +83,7 @@ class TrainingSlotsWidget extends StatelessWidget {
     final fontSize = (slotSize * 0.45).clamp(10.0, 24.0);
     final margin = slotSize < 35 ? 2.0 : 4.0;
     final borderRadius = slotSize < 35 ? 6.0 : 8.0;
-    
+
     return Container(
       margin: EdgeInsets.symmetric(horizontal: margin),
       width: slotSize,

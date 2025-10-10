@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 class TrainingCareerWidget extends StatelessWidget {
   final List<String> careerPath;
 
-  const TrainingCareerWidget({
-    super.key,
-    required this.careerPath,
-  });
+  const TrainingCareerWidget({super.key, required this.careerPath});
 
   @override
   Widget build(BuildContext context) {
@@ -28,10 +25,7 @@ class TrainingCareerWidget extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -69,7 +63,7 @@ class TrainingCareerWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          
+
           if (isLongCareer) ...[
             // Two columns for long career paths
             Row(

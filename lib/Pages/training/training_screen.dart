@@ -23,7 +23,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   late TrainingGameService _gameService;
   late TrainingTimerService _timerService;
   late TrainingImageService _imageService;
-  
+
   @override
   void initState() {
     super.initState();
@@ -45,9 +45,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
     await _gameService.loadQuestions();
     // ignore: use_build_context_synchronously
     await _imageService.loadImages(context);
-    
+
     if (!mounted) return;
-    
+
     if (_gameService.questions.isNotEmpty) {
       _gameService.prepareQuestion(_imageService.getRandomImage());
       _timerService.startTimer();
@@ -101,11 +101,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.timer_off,
-                    color: Colors.orange,
-                    size: 48,
-                  ),
+                  const Icon(Icons.timer_off, color: Colors.orange, size: 48),
                   const SizedBox(height: 16),
                   const Text(
                     'Time\'s Up!',
@@ -119,10 +115,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                   Text(
                     'The correct answer was: ${_gameService.currentQuestion?.answer ?? ''}',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                    ),
+                    style: const TextStyle(fontSize: 16, color: Colors.white70),
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
@@ -192,11 +185,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.check_circle,
-                    color: Colors.white,
-                    size: 48,
-                  ),
+                  const Icon(Icons.check_circle, color: Colors.white, size: 48),
                   const SizedBox(height: 16),
                   const Text(
                     'Excellent!',
@@ -209,10 +198,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'You earned $pointsGained points!',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                    ),
+                    style: const TextStyle(fontSize: 16, color: Colors.white70),
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
@@ -349,7 +335,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
               },
             ),
           ),
-          
+
           // Dark overlay for better text readability
           Positioned.fill(
             child: Container(
@@ -365,61 +351,59 @@ class _TrainingScreenState extends State<TrainingScreen> {
               ),
             ),
           ),
-          
+
           // Game content overlay
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Column(
                 children: [
-                // Header with timer and score
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TrainingTimerWidget(
-                      secondsLeft: _timerService.secondsLeft,
-                    ),
-                    TrainingScoreWidget(
-                      score: _gameService.score,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                
-                // Career path section
-                TrainingCareerWidget(
-                  careerPath: _gameService.currentQuestion?.careerPath ?? [],
-                ),
-                const SizedBox(height: 28),
-                
-                // Answer slots
-                TrainingSlotsWidget(
-                  firstName: _gameService.firstName,
-                  lastName: _gameService.lastName,
-                  slots: _gameService.slots,
-                  screenWidth: MediaQuery.of(context).size.width,
-                  onSlotTapped: _onSlotTapped,
-                  inputDisabled: _gameService.inputDisabled,
-                ),
-                const SizedBox(height: 24),
-                
-                // Letter pool
-                Expanded(
-                  child: TrainingLetterPoolWidget(
-                    pool: _gameService.pool,
+                  // Header with timer and score
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TrainingTimerWidget(
+                        secondsLeft: _timerService.secondsLeft,
+                      ),
+                      TrainingScoreWidget(score: _gameService.score),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Career path section
+                  TrainingCareerWidget(
+                    careerPath: _gameService.currentQuestion?.careerPath ?? [],
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Answer slots
+                  TrainingSlotsWidget(
+                    firstName: _gameService.firstName,
+                    lastName: _gameService.lastName,
+                    slots: _gameService.slots,
                     screenWidth: MediaQuery.of(context).size.width,
-                    onLetterSelected: _onLetterSelected,
+                    onSlotTapped: _onSlotTapped,
                     inputDisabled: _gameService.inputDisabled,
                   ),
-                ),
-                const SizedBox(height: 8),
-                
-                // Control buttons
-                TrainingControlsWidget(
-                  onSkip: _skipQuestion,
-                  onRemoveLetter: _removeLastLetter,
-                ),
-              ],
+                  const SizedBox(height: 24),
+
+                  // Letter pool
+                  Expanded(
+                    child: TrainingLetterPoolWidget(
+                      pool: _gameService.pool,
+                      screenWidth: MediaQuery.of(context).size.width,
+                      onLetterSelected: _onLetterSelected,
+                      inputDisabled: _gameService.inputDisabled,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Control buttons
+                  TrainingControlsWidget(
+                    onSkip: _skipQuestion,
+                    onRemoveLetter: _removeLastLetter,
+                  ),
+                ],
               ),
             ),
           ),

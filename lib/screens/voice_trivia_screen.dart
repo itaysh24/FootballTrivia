@@ -37,9 +37,7 @@ class _VoiceTriviaScreenState extends State<VoiceTriviaScreen> {
           // Blur overlay
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-            child: Container(
-              color: Colors.black.withOpacity(0.3),
-            ),
+            child: Container(color: Colors.black.withOpacity(0.3)),
           ),
           // Content
           Center(
@@ -91,11 +89,7 @@ class _VoiceTriviaScreenState extends State<VoiceTriviaScreen> {
                           ),
                         ],
                       ),
-                      child: Icon(
-                        Icons.mic,
-                        size: 50,
-                        color: Colors.white,
-                      ),
+                      child: Icon(Icons.mic, size: 50, color: Colors.white),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -103,7 +97,9 @@ class _VoiceTriviaScreenState extends State<VoiceTriviaScreen> {
                     _isListening ? "Listening..." : "Tap to Answer",
                     style: TextStyle(
                       fontSize: 16,
-                      color: _isListening ? Colors.green.shade300 : Colors.white70,
+                      color: _isListening
+                          ? Colors.green.shade300
+                          : Colors.white70,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

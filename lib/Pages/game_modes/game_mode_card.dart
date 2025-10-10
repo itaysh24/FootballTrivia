@@ -66,44 +66,41 @@ class GameModeCard extends StatelessWidget {
                       ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: locked 
+                  color: locked
                       ? Colors.white.withOpacity(0.1)
                       : Colors.white.withOpacity(0.4),
                   width: 1.5,
                 ),
               ),
-        child: ListTile(
-          leading: Icon(
-            locked ? Icons.lock : Icons.sports_esports,
-            color: Colors.white,
-            size: 30,
-          ),
-          title: Text(
-            title,
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-              shadows: [
-                Shadow(
-                  color: Colors.black.withOpacity(0.6),
-                  offset: const Offset(1, 1),
-                  blurRadius: 2,
-                )
-              ],
-            ),
-          ),
-          subtitle: Text(
-            description,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
-          trailing: locked
-              ? const Icon(Icons.lock_outline, color: Colors.white54)
-              : const Icon(Icons.arrow_forward_ios, color: Colors.white),
-        ),
+              child: ListTile(
+                leading: Icon(
+                  locked ? Icons.lock : Icons.sports_esports,
+                  color: Colors.white,
+                  size: 30,
+                ),
+                title: Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.6),
+                        offset: const Offset(1, 1),
+                        blurRadius: 2,
+                      ),
+                    ],
+                  ),
+                ),
+                subtitle: Text(
+                  description,
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+                trailing: locked
+                    ? const Icon(Icons.lock_outline, color: Colors.white54)
+                    : const Icon(Icons.arrow_forward_ios, color: Colors.white),
+              ),
             ),
           ),
         ),

@@ -27,7 +27,7 @@ class TrainingGameService {
   int currentIndex = 0;
   int score = 0;
   bool inputDisabled = false;
-  
+
   String currentImage = '';
   String correctAnswer = '';
   List<String?> slots = [];
@@ -37,18 +37,20 @@ class TrainingGameService {
   String lastName = '';
   int firstNameLength = 0;
   int lastNameLength = 0;
-  
+
   final Random _rnd = Random();
-  
-  Question? get currentQuestion => 
+
+  Question? get currentQuestion =>
       questions.isNotEmpty ? questions[currentIndex] : null;
 
   Future<void> loadQuestions() async {
     try {
-      final String response = await rootBundle.loadString('assets/questions.json');
+      final String response = await rootBundle.loadString(
+        'assets/questions.json',
+      );
       final data = json.decode(response) as List;
       questions = data.map((q) => Question.fromJson(q)).toList();
-      
+
       // Shuffle questions for training variety
       questions.shuffle(_rnd);
     } catch (e) {
@@ -56,11 +58,12 @@ class TrainingGameService {
     }
   }
 
-  String _normalize(String s) => s.toUpperCase().replaceAll(RegExp(r'[^A-Z]'), '');
+  String _normalize(String s) =>
+      s.toUpperCase().replaceAll(RegExp(r'[^A-Z]'), '');
 
   void prepareQuestion(String imagePath) {
     if (questions.isEmpty) return;
-    
+
     final current = questions[currentIndex];
     correctAnswer = _normalize(current.answer);
     currentImage = imagePath;
@@ -71,11 +74,11 @@ class TrainingGameService {
     lastName = words.length > 1 ? words.sublist(1).join(' ') : '';
     firstNameLength = firstName.length;
     lastNameLength = lastName.length;
-    
+
     // Create slots for first name and last name separately
     final firstNameSlots = List<String?>.filled(firstNameLength, null);
     final lastNameSlots = List<String?>.filled(lastNameLength, null);
-    
+
     // Combine slots for the overall game logic
     slots = [...firstNameSlots, ...lastNameSlots];
     slotAssignedPoolIndex = List<int?>.filled(slots.length, null);
@@ -103,8 +106,10 @@ class TrainingGameService {
   }
 
   bool selectLetter(int poolIndex) {
-    if (inputDisabled || poolIndex < 0 || poolIndex >= pool.length) return false;
-    
+    if (inputDisabled || poolIndex < 0 || poolIndex >= pool.length) {
+      return false;
+    }
+
     final item = pool[poolIndex];
     if (item.used) return false;
 
@@ -114,13 +119,13 @@ class TrainingGameService {
     slots[slotIndex] = item.char;
     slotAssignedPoolIndex[slotIndex] = poolIndex;
     item.used = true;
-    
+
     return true;
   }
 
   bool clearSlot(int slotIndex) {
     if (inputDisabled) return false;
-    
+
     final assignedPool = slotAssignedPoolIndex[slotIndex];
     if (assignedPool != null) {
       pool[assignedPool].used = false;
@@ -153,7 +158,7 @@ class TrainingGameService {
       final pointsGained = 10 + secondsLeft;
       score += pointsGained;
       inputDisabled = true;
-      
+
       return AnswerCheckResult(
         isCorrect: true,
         showError: false,

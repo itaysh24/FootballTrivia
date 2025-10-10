@@ -17,14 +17,16 @@ class ProfileInfoRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: _items
-            .map((item) => Expanded(
-                  child: Row(
-                    children: [
-                      if (_items.indexOf(item) != 0) const VerticalDivider(),
-                      Expanded(child: ProfileInfoItemWidget(item: item)),
-                    ],
-                  ),
-                ))
+            .map(
+              (item) => Expanded(
+                child: Row(
+                  children: [
+                    if (_items.indexOf(item) != 0) const VerticalDivider(),
+                    Expanded(child: ProfileInfoItemWidget(item: item)),
+                  ],
+                ),
+              ),
+            )
             .toList(),
       ),
     );
@@ -49,7 +51,6 @@ class ProfileInfoItemWidget extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
           ),
         ),
-        
       ],
     );
   }

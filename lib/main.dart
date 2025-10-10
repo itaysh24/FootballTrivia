@@ -7,24 +7,24 @@ import 'package:provider/provider.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'Pages/profile/profile_page.dart';
 import 'pages/leaderboard/leaderboard_page.dart';
-import 'pages/training/training_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/music_service.dart';
 import 'pages/game_modes/game_modes_main.dart';
-import 'pages/voice_trivia.dart';
 import 'pages/training/tutorial_screen.dart';
 import 'widgets/tutorial_popup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/RTG/road_to_glory.dart';
+import 'pages/game_screen.dart';
 
 // Global music service instance
 final musicService = MusicService();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-   await Supabase.initialize(
+  await Supabase.initialize(
     url: 'https://nuvbzopwnnyvovdohwao.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51dmJ6b3B3bm55dm92ZG9od2FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNjg0ODIsImV4cCI6MjA3Mzg0NDQ4Mn0.d0-9hnS7ahKNKRnZaFJaHQ4_teMMrUGtQnI3QDH24d8',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51dmJ6b3B3bm55dm92ZG9od2FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNjg0ODIsImV4cCI6MjA3Mzg0NDQ4Mn0.d0-9hnS7ahKNKRnZaFJaHQ4_teMMrUGtQnI3QDH24d8',
   );
   final musicService = MusicService();
   await musicService.preloadAllTracks();
@@ -40,6 +40,7 @@ class MyApp extends StatefulWidget {
       home: HomePage(musicService: musicService),
     );
   }
+
   @override
   State<MyApp> createState() => _MyAppState();
 }
@@ -62,7 +63,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
+
     switch (state) {
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
@@ -109,11 +110,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ),
         home: MyHomePage(),
         routes: {
-      '/game_modes': (context) => const GameModesPage(),
-      '/training': (context) => const TrainingScreen(), // your training mode
-      '/voice_trivia': (context) => const VoiceTriviaPage(),
-      '/tutorial': (context) => const TutorialScreen(),
-      '/road_to_glory': (context) => const RoadToGloryScreen(),
+          '/game_modes': (context) => const GameModesPage(),
+          '/training': (context) => const GameScreen(), // Universal game screen
+          '/tutorial': (context) => const TutorialScreen(),
+          '/road_to_glory': (context) => const RoadToGloryScreen(),
+          '/game': (context) => const GameScreen(), // Universal game screen
         },
       ),
     );
@@ -131,13 +132,14 @@ final List<IconData> iconList = [
 
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
-  double blurLevel = 2.0; // Default blur level (0.0 = no blur, 10.0 = heavy blur)
-  
+  double blurLevel =
+      2.0; // Default blur level (0.0 = no blur, 10.0 = heavy blur)
+
   void getNext() {
     current = WordPair.random();
     notifyListeners();
   }
-  
+
   var favorites = <WordPair>[];
 
   void toggleFavorite() {
@@ -148,7 +150,7 @@ class MyAppState extends ChangeNotifier {
     }
     notifyListeners();
   }
-  
+
   void updateBlurLevel(double newLevel) {
     blurLevel = newLevel;
     notifyListeners();
@@ -162,7 +164,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 0;
-  
+
   @override
   void initState() {
     super.initState();
@@ -200,11 +202,11 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
-    
+
     Widget page;
     switch (selectedIndex) {
       case 0:
@@ -256,9 +258,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         sigmaX: appState.blurLevel,
                         sigmaY: appState.blurLevel,
                       ),
-                      child: Container(
-                        color: Colors.transparent,
-                      ),
+                      child: Container(color: Colors.transparent),
                     )
                   : Container(),
             ),
@@ -280,23 +280,24 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Container(
                 height: 50,
                 decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.all(
-                    Radius.circular(20),
-                  ),
+                  borderRadius: const BorderRadius.all(Radius.circular(20)),
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      const Color.fromARGB(120, 33, 43, 31), // Semi-transparent dark
-                      const Color.fromARGB(60, 33, 43, 31),  // More transparent
+                      const Color.fromARGB(
+                        120,
+                        33,
+                        43,
+                        31,
+                      ), // Semi-transparent dark
+                      const Color.fromARGB(60, 33, 43, 31), // More transparent
                       Colors.transparent, // Fully transparent at bottom
                     ],
                   ),
                 ),
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.all(
-                    Radius.circular(20),
-                  ),
+                  borderRadius: const BorderRadius.all(Radius.circular(20)),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 5),
                     child: Container(
@@ -313,7 +314,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 2,
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
@@ -345,22 +349,32 @@ class _MyHomePageState extends State<MyHomePage> {
             bottom: 0,
             child: SafeArea(
               child: AnimatedBottomNavigationBar(
-              icons: iconList,
-              activeIndex: selectedIndex,
-              gapLocation: GapLocation.none,
-              notchSmoothness: NotchSmoothness.verySmoothEdge,
-              leftCornerRadius: 32,
-              rightCornerRadius: 32,
-              onTap: (index) {
-                setState(() {
-                  selectedIndex = index;
-                });
-              },
-              activeColor: const Color(0xFFFFA726), // Primary orange
-              inactiveColor: const Color.fromARGB(255, 156, 155, 155), // Gray for inactive items
-              backgroundColor: const Color.fromARGB(230, 33, 43, 31), // Semi-transparent dark background
-              splashColor: const Color(0xFFFFA726), // Orange splash effect
-              iconSize: 24,
+                icons: iconList,
+                activeIndex: selectedIndex,
+                gapLocation: GapLocation.none,
+                notchSmoothness: NotchSmoothness.verySmoothEdge,
+                leftCornerRadius: 32,
+                rightCornerRadius: 32,
+                onTap: (index) {
+                  setState(() {
+                    selectedIndex = index;
+                  });
+                },
+                activeColor: const Color(0xFFFFA726), // Primary orange
+                inactiveColor: const Color.fromARGB(
+                  255,
+                  156,
+                  155,
+                  155,
+                ), // Gray for inactive items
+                backgroundColor: const Color.fromARGB(
+                  230,
+                  33,
+                  43,
+                  31,
+                ), // Semi-transparent dark background
+                splashColor: const Color(0xFFFFA726), // Orange splash effect
+                iconSize: 24,
               ),
             ),
           ),
@@ -369,7 +383,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-
 
 class HomePage extends StatelessWidget {
   final MusicService? musicService; // Add this line
@@ -408,14 +421,18 @@ class HomePage extends StatelessWidget {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      // Add your play now logic here
+                      // Navigate to universal game screen
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const TrainingScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const GameScreen(),
+                        ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFA726), // Primary orange
+                      backgroundColor: const Color(
+                        0xFFFFA726,
+                      ), // Primary orange
                       foregroundColor: Colors.black, // Black text
                       padding: const EdgeInsets.symmetric(
                         horizontal: 40,
@@ -437,7 +454,6 @@ class HomePage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 20),
-            
             ],
           ),
         ),
@@ -446,14 +462,9 @@ class HomePage extends StatelessWidget {
   }
 }
 
-
-
 class ShopPage extends StatelessWidget {
- @override
+  @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text('Shop Page'),
-    );
+    return Center(child: Text('Shop Page'));
   }
 }
-

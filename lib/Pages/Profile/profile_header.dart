@@ -9,10 +9,7 @@ class ProfileHeader extends StatelessWidget {
     return const Stack(
       fit: StackFit.expand,
       children: [
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: ProfileAvatar(),
-        ),
+        Align(alignment: Alignment.bottomCenter, child: ProfileAvatar()),
       ],
     );
   }

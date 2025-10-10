@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ProfileContainer extends StatelessWidget {
   final Widget child;
-  
+
   const ProfileContainer({super.key, required this.child});
 
   @override
@@ -25,10 +25,7 @@ class ProfileContainer extends StatelessWidget {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: child,
-      ),
+      child: ClipRRect(borderRadius: BorderRadius.circular(18), child: child),
     );
   }
 }

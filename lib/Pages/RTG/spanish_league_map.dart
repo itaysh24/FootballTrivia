@@ -1,5 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../core/game_modes_manager.dart';
+import '../../services/progress_service.dart';
+import '../game_screen.dart';
 
 class SpanishLeagueMapScreen extends StatefulWidget {
   const SpanishLeagueMapScreen({super.key});
@@ -9,32 +12,44 @@ class SpanishLeagueMapScreen extends StatefulWidget {
 }
 
 class _SpanishLeagueMapScreenState extends State<SpanishLeagueMapScreen> {
-  // Track which levels are unlocked (first level is always unlocked)
-  final Set<int> unlockedLevels = {1};
+  // Track which levels are unlocked
+  Set<int> unlockedLevels = {};
   int currentPage = 0;
   final int levelsPerPage = 20;
   final int totalLevels = 100;
+  late ProgressService _progressService;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _initializeLevels();
+    _progressService = ProgressService();
+    _loadProgress();
   }
 
-  void _initializeLevels() {
-    // For demo purposes, unlock first 5 levels
-    // In a real app, this would come from saved progress
-    for (int i = 1; i <= 5; i++) {
-      unlockedLevels.add(i);
-    }
+  /// Load progress from SharedPreferences
+  Future<void> _loadProgress() async {
+    final levels = await _progressService.getUnlockedLevels('spanish');
+    setState(() {
+      unlockedLevels = levels;
+      _isLoading = false;
+    });
+  }
+
+  /// Refresh progress when returning from a level
+  Future<void> _refreshProgress() async {
+    await _loadProgress();
   }
 
   int get totalPages => (totalLevels / levelsPerPage).ceil();
-  
+
   List<int> get currentPageLevels {
     final startLevel = currentPage * levelsPerPage + 1;
     final endLevel = (startLevel + levelsPerPage - 1).clamp(1, totalLevels);
-    return List.generate(endLevel - startLevel + 1, (index) => startLevel + index);
+    return List.generate(
+      endLevel - startLevel + 1,
+      (index) => startLevel + index,
+    );
   }
 
   @override
@@ -43,10 +58,7 @@ class _SpanishLeagueMapScreenState extends State<SpanishLeagueMapScreen> {
       appBar: AppBar(
         title: const Text(
           'Spanish League',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -77,9 +89,7 @@ class _SpanishLeagueMapScreenState extends State<SpanishLeagueMapScreen> {
               ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-                child: Container(
-                  color: Colors.transparent,
-                ),
+                child: Container(color: Colors.transparent),
               ),
             ),
           ),
@@ -88,9 +98,17 @@ class _SpanishLeagueMapScreenState extends State<SpanishLeagueMapScreen> {
             top: 170,
             left: 16,
             right: 16,
-            child: Container(
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFFFFA726),
+                    ),
+                  )
+                : Container(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height - 300, // Max height constraint
+                maxHeight:
+                    MediaQuery.of(context).size.height -
+                    300, // Max height constraint
               ),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
@@ -98,8 +116,13 @@ class _SpanishLeagueMapScreenState extends State<SpanishLeagueMapScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    const Color.fromARGB(120, 33, 43, 31), // Semi-transparent dark
-                    const Color.fromARGB(60, 33, 43, 31),  // More transparent
+                    const Color.fromARGB(
+                      120,
+                      33,
+                      43,
+                      31,
+                    ), // Semi-transparent dark
+                    const Color.fromARGB(60, 33, 43, 31), // More transparent
                     Colors.transparent, // Fully transparent at bottom
                   ],
                 ),
@@ -108,11 +131,11 @@ class _SpanishLeagueMapScreenState extends State<SpanishLeagueMapScreen> {
                 borderRadius: BorderRadius.circular(20),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 5),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
                       color: Colors.white.withOpacity(0.1),
-                  border: Border.all(
+                      border: Border.all(
                         color: Colors.white.withOpacity(0.2),
                         width: 1,
                       ),
@@ -120,7 +143,8 @@ class _SpanishLeagueMapScreenState extends State<SpanishLeagueMapScreen> {
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
-                        mainAxisSize: MainAxisSize.min, // Add this to minimize height
+                        mainAxisSize:
+                            MainAxisSize.min, // Add this to minimize height
                         children: [
                           const Text(
                             'Spanish League',
@@ -130,21 +154,21 @@ class _SpanishLeagueMapScreenState extends State<SpanishLeagueMapScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Flexible( // Change from Expanded to Flexible
+                          Flexible(
+                            // Change from Expanded to Flexible
                             child: _buildLevelGrid(),
                           ),
                           const SizedBox(height: 10),
                           _buildPaginationControls(),
                           const SizedBox(height: 10),
-                          
                         ],
                       ),
                     ),
                   ),
-                  ),
                 ),
               ),
             ),
+          ),
         ],
       ),
     );
@@ -156,26 +180,25 @@ class _SpanishLeagueMapScreenState extends State<SpanishLeagueMapScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: Colors.white.withOpacity(0.1),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Previous page button
           GestureDetector(
-            onTap: currentPage > 0 ? () {
-              setState(() {
-                currentPage--;
-              });
-            } : null,
+            onTap: currentPage > 0
+                ? () {
+                    setState(() {
+                      currentPage--;
+                    });
+                  }
+                : null,
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: currentPage > 0 
+                color: currentPage > 0
                     ? Colors.white.withOpacity(0.2)
                     : Colors.grey.withOpacity(0.2),
               ),
@@ -197,22 +220,26 @@ class _SpanishLeagueMapScreenState extends State<SpanishLeagueMapScreen> {
           ),
           // Next page button
           GestureDetector(
-            onTap: currentPage < totalPages - 1 ? () {
-              setState(() {
-                currentPage++;
-              });
-            } : null,
+            onTap: currentPage < totalPages - 1
+                ? () {
+                    setState(() {
+                      currentPage++;
+                    });
+                  }
+                : null,
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: currentPage < totalPages - 1 
+                color: currentPage < totalPages - 1
                     ? Colors.white.withOpacity(0.2)
                     : Colors.grey.withOpacity(0.2),
               ),
               child: Icon(
                 Icons.chevron_right,
-                color: currentPage < totalPages - 1 ? Colors.white : Colors.grey,
+                color: currentPage < totalPages - 1
+                    ? Colors.white
+                    : Colors.grey,
                 size: 24,
               ),
             ),
@@ -376,15 +403,23 @@ class _SpanishLeagueMapScreenState extends State<SpanishLeagueMapScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // TODO: Navigate to actual level/game
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Starting Level $levelNumber...'),
-                  backgroundColor: const Color(0xFFFFD700),
+              // Navigate to game using GameConfiguration
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GameScreen(
+                    config: GameModeConfigurations.getRoadToGloryMode(
+                      level: levelNumber,
+                      leagueName: 'La Liga',
+                      leagueId: 'spanish',
+                    ),
+                  ),
                 ),
               );
+              // Refresh progress after returning from game
+              _refreshProgress();
             },
             child: const Text('Start Level'),
           ),

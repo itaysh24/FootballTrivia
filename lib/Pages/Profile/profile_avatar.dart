@@ -21,11 +21,7 @@ class ProfileAvatar extends StatelessWidget {
               ),
             ),
           ),
-          const Positioned(
-            bottom: 0,
-            right: 0,
-            child: OnlineStatusIndicator(),
-          ),
+          const Positioned(bottom: 0, right: 0, child: OnlineStatusIndicator()),
         ],
       ),
     );

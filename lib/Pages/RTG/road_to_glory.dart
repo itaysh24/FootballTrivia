@@ -34,10 +34,7 @@ class RoadToGloryScreen extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.9)
-                  ],
+                  colors: [Colors.transparent, Colors.black.withOpacity(0.9)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -46,139 +43,147 @@ class RoadToGloryScreen extends StatelessWidget {
           ),
           // Content
           Center(
-          child: Container(
-            margin: const EdgeInsets.all(10.0),
-            padding: const EdgeInsets.all(26.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.3),
-                width: 2,
+            child: Container(
+              margin: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(26.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 2,
+                ),
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.1),
+                    Colors.white.withOpacity(0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
-              gradient: LinearGradient(
-                colors: [
-                  Colors.white.withOpacity(0.1),
-                  Colors.white.withOpacity(0.05),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: SizedBox(
-              height: 320, // Fixed height for the container
-              child: InfiniteCarousel.builder(
-                itemCount: leagues.length,
-                itemExtent: 240,
-                center: true,
-                anchor: 0.0,
-                velocityFactor: 0.8,
-                loop: true,
-                itemBuilder: (context, index, realIndex) {
-                  final league = leagues[index];
-                  return GestureDetector(
-                    onTap: () {
-                      switch (league['name']) {
-                        case 'English League':
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const EnglishLeagueMapScreen(),
-                            ),
-                          );
-                        case 'Spanish League':
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SpanishLeagueMapScreen(),
-                            ),
-                          );
-                        case 'Italian League':
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ItalianLeagueMapScreen(),
-                            ),
-                          );
-                        case 'German League':
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const GermanLeagueMapScreen(),
-                            ),
-                          );
-                        case 'French League':
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const FrenchLeagueMapScreen(),
-                            ),
-                          );
-                        default:
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${league['name']} coming soon!'),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
-                      }
-                    },
-                    child: Container(
-                      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 15,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Image.asset(
-                              league['image']!,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.transparent,
-                                    Colors.black.withOpacity(0.7)
-                                  ],
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                ),
+              child: SizedBox(
+                height: 320, // Fixed height for the container
+                child: InfiniteCarousel.builder(
+                  itemCount: leagues.length,
+                  itemExtent: 240,
+                  center: true,
+                  anchor: 0.0,
+                  velocityFactor: 0.8,
+                  loop: true,
+                  itemBuilder: (context, index, realIndex) {
+                    final league = leagues[index];
+                    return GestureDetector(
+                      onTap: () {
+                        switch (league['name']) {
+                          case 'English League':
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const EnglishLeagueMapScreen(),
                               ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomCenter,
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Text(
-                                  league['name']!,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                            );
+                          case 'Spanish League':
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const SpanishLeagueMapScreen(),
                               ),
+                            );
+                          case 'Italian League':
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ItalianLeagueMapScreen(),
+                              ),
+                            );
+                          case 'German League':
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const GermanLeagueMapScreen(),
+                              ),
+                            );
+                          case 'French League':
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const FrenchLeagueMapScreen(),
+                              ),
+                            );
+                          default:
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${league['name']} coming soon!'),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                        }
+                      },
+                      child: Container(
+                        margin: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 15,
+                              offset: Offset(0, 8),
                             ),
                           ],
                         ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.asset(
+                                league['image']!,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black.withOpacity(0.7),
+                                    ],
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                  ),
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Text(
+                                    league['name']!,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
             ),
           ),
         ],

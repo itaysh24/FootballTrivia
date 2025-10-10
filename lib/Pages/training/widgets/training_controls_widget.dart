@@ -20,20 +20,14 @@ class TrainingControlsWidget extends StatelessWidget {
           icon: Icons.skip_next_rounded,
           label: 'Skip',
           onPressed: onSkip,
-          colors: [
-            Colors.blue.withOpacity(0.8),
-            Colors.blue.shade700,
-          ],
+          colors: [Colors.blue.withOpacity(0.8), Colors.blue.shade700],
           borderColor: Colors.blue.shade300,
         ),
         _buildControlButton(
           icon: Icons.backspace_rounded,
           label: 'Undo',
           onPressed: onRemoveLetter,
-          colors: [
-            Colors.red.withOpacity(0.8),
-            Colors.red.shade700,
-          ],
+          colors: [Colors.red.withOpacity(0.8), Colors.red.shade700],
           borderColor: Colors.red.shade300,
         ),
       ],
@@ -55,10 +49,7 @@ class TrainingControlsWidget extends StatelessWidget {
           colors: colors,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: borderColor,
-          width: 1,
-        ),
+        border: Border.all(color: borderColor, width: 1),
         boxShadow: [
           BoxShadow(
             color: colors[1].withOpacity(0.3),
@@ -82,11 +73,7 @@ class TrainingControlsWidget extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  icon,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                Icon(icon, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   label,

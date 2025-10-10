@@ -8,20 +8,17 @@ class TrainingTimerService {
   final VoidCallback? onTimeUp;
   final VoidCallback? onTimerUpdate;
 
-  TrainingTimerService({
-    this.onTimeUp,
-    this.onTimerUpdate,
-  });
+  TrainingTimerService({this.onTimeUp, this.onTimerUpdate});
 
   void startTimer({int duration = 60}) {
     stop();
     secondsLeft = duration;
-    
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (secondsLeft > 0) {
         secondsLeft--;
         onTimerUpdate?.call();
-        
+
         if (secondsLeft == 0) {
           onTimeUp?.call();
         }
@@ -45,7 +42,7 @@ class TrainingTimerService {
         if (secondsLeft > 0) {
           secondsLeft--;
           onTimerUpdate?.call();
-          
+
           if (secondsLeft == 0) {
             onTimeUp?.call();
           }

@@ -21,7 +21,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         .order('score', ascending: false);
 
     final data = response as List<dynamic>;
-    return data.map((row) => Player.fromMap(row as Map<String, dynamic>)).toList();
+    return data
+        .map((row) => Player.fromMap(row as Map<String, dynamic>))
+        .toList();
   }
 
   @override

@@ -9,21 +9,24 @@ class TutorialScreen extends StatefulWidget {
 
 class _TutorialScreenState extends State<TutorialScreen> {
   int _currentStep = 0;
-  
+
   final List<TutorialStep> _steps = [
     TutorialStep(
       title: "Welcome to Football Trivia!",
-      description: "Test your football knowledge with exciting trivia questions.",
+      description:
+          "Test your football knowledge with exciting trivia questions.",
       icon: Icons.sports_soccer,
     ),
     TutorialStep(
       title: "Game Modes",
-      description: "Choose from different game modes including Training and Voice Trivia.",
+      description:
+          "Choose from different game modes including Training and Voice Trivia.",
       icon: Icons.games,
     ),
     TutorialStep(
       title: "Voice Trivia",
-      description: "Answer questions using your voice for a hands-free experience.",
+      description:
+          "Answer questions using your voice for a hands-free experience.",
       icon: Icons.mic,
     ),
     TutorialStep(
@@ -51,10 +54,12 @@ class _TutorialScreenState extends State<TutorialScreen> {
               LinearProgressIndicator(
                 value: (_currentStep + 1) / _steps.length,
                 backgroundColor: Colors.white.withOpacity(0.3),
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFA726)),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  Color(0xFFFFA726),
+                ),
               ),
               const SizedBox(height: 40),
-              
+
               // Tutorial content
               Expanded(
                 child: Column(
@@ -87,7 +92,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
                   ],
                 ),
               ),
-              
+
               // Navigation buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -106,7 +111,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
                     )
                   else
                     const SizedBox.shrink(),
-                  
+
                   if (_currentStep < _steps.length - 1)
                     ElevatedButton(
                       onPressed: () {
@@ -117,7 +122,10 @@ class _TutorialScreenState extends State<TutorialScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFFA726),
                         foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -132,7 +140,10 @@ class _TutorialScreenState extends State<TutorialScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFFA726),
                         foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
