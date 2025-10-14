@@ -321,6 +321,121 @@ class _GameScreenState extends State<GameScreen> {
     });
   }
 
+  /// Build skip button (only visible in casual and rush modes)
+  Widget _buildSkipButton() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _handleSkip,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.skip_next,
+                  color: Colors.white70,
+                  size: 16,
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'Skip',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Handle skip button press - show correct answer and load next question
+  Future<void> _handleSkip() async {
+    if (_currentPlayer == null) return;
+
+    // Show correct answer briefly
+    await _showCorrectAnswerDialog(_currentPlayer!['answer']?.toString() ?? '');
+
+    // Increment mistake count (wrong answer)
+    setState(() {
+      _totalAnswered++;
+      // Note: _score is not incremented for skips (treats as wrong answer)
+    });
+
+    // Load next random question
+    await _fetchRandomQuestion();
+  }
+
+  /// Show dialog revealing the correct answer for skipped questions
+  Future<void> _showCorrectAnswerDialog(String correctAnswer) async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: AlertDialog(
+          backgroundColor: const Color.fromARGB(200, 33, 43, 31),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: Colors.white.withOpacity(0.2), width: 1),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.skip_next, color: Color(0xFFFFA726), size: 32),
+              SizedBox(width: 12),
+              Text('Skipped!', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+          content: Text(
+            'Correct answer: $correctAnswer',
+            style: const TextStyle(color: Colors.white70, fontSize: 16),
+          ),
+          actions: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFA726), Color(0xFFFF8A00)],
+                ),
+              ),
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: const Text(
+                  'Next Question',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   // ============================================================================
   // ANSWER VALIDATION LOGIC
@@ -870,38 +985,47 @@ class _GameScreenState extends State<GameScreen> {
                 ),
                 const SizedBox(width: 8),
               ],
-              // Score display
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFA726).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: const Color(0xFFFFA726).withOpacity(0.5),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.star_rounded,
-                      color: Color(0xFFFFA726),
-                      size: 20,
+              // Score display and Skip button
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '$_score / $_totalAnswered',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFA726).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFFFFA726).withOpacity(0.5),
+                        width: 1,
                       ),
                     ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          color: Color(0xFFFFA726),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '$_score / $_totalAnswered',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Skip button (only for casual and rush modes, disabled in Road to Glory)
+                  if (widget.config?.mode != GameMode.roadToGlory) ...[
+                    const SizedBox(width: 8),
+                    _buildSkipButton(),
                   ],
-                ),
+                ],
               ),
             ],
           ),
