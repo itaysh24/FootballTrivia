@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:speech_to_text/speech_to_text.dart';
 import 'dart:async';
 import 'dart:ui';
 import '../core/game_modes_manager.dart';
+import '../services/supabase/supabase_search.dart';
 
 /// ============================================================================
 /// GAME SCREEN - Universal Question-Answer Screen
@@ -42,20 +41,11 @@ class _GameScreenState extends State<GameScreen> {
   /// Loading state for question fetching
   bool _isLoading = false;
 
-  /// Voice recording state
-  bool _isListening = false;
-
   /// Answer text controller
   final TextEditingController _answerController = TextEditingController();
 
   /// Supabase client instance
   final SupabaseClient _supabase = Supabase.instance.client;
-
-  /// Speech to text instance
-  final SpeechToText _speechToText = SpeechToText();
-
-  /// Speech available flag
-  bool _speechAvailable = false;
 
   /// Score tracking
   int _score = 0;
@@ -75,6 +65,24 @@ class _GameScreenState extends State<GameScreen> {
   /// Current question index
   int _currentQuestionIndex = 0;
 
+  /// Search service instance for autocomplete functionality
+  final SupabaseSearchService _searchService = searchService;
+
+  /// Autocomplete suggestions (still used for UI but not for validation)
+  List<PlayerSearchResult> _suggestions = [];
+
+  /// Whether to show autocomplete dropdown
+  bool _showSuggestions = false;
+
+  /// Focus node for answer input
+  final FocusNode _answerFocusNode = FocusNode();
+
+  /// Debounce timer for search (still used for autocomplete UI)
+  Timer? _debounceTimer;
+
+  /// Selected player ID for validation (null if no valid selection made)
+  int? _selectedPlayerId;
+
   // ============================================================================
   // LIFECYCLE METHODS
   // ============================================================================
@@ -82,14 +90,15 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeSpeech();
     _initializeGame();
   }
 
   @override
   void dispose() {
     _answerController.dispose();
+    _answerFocusNode.dispose();
     _gameTimer?.cancel();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -181,6 +190,7 @@ class _GameScreenState extends State<GameScreen> {
     setState(() {
       _currentPlayer = _allQuestions[_currentQuestionIndex];
       _answerController.clear();
+      _selectedPlayerId = null; // Reset selected player for new question
     });
   }
 
@@ -189,33 +199,6 @@ class _GameScreenState extends State<GameScreen> {
   // ============================================================================
 
   /// Initialize speech recognition using speech_to_text package
-  Future<void> _initializeSpeech() async {
-    try {
-      // Request microphone permission
-      final status = await Permission.microphone.request();
-
-      if (status.isGranted) {
-        // Initialize speech to text
-        _speechAvailable = await _speechToText.initialize(
-          onStatus: (status) => debugPrint('Speech status: $status'),
-          onError: (error) => debugPrint('Speech error: $error'),
-        );
-
-        if (_speechAvailable) {
-          debugPrint('Speech recognition initialized successfully');
-        } else {
-          debugPrint('Speech recognition not available on this device');
-        }
-      } else {
-        _showErrorDialog(
-          'Microphone permission is required for voice input. '
-          'Please enable it in app settings.',
-        );
-      }
-    } catch (e) {
-      debugPrint('Error initializing speech: $e');
-    }
-  }
 
   // ============================================================================
   // SUPABASE - QUESTION FETCHING LOGIC
@@ -254,6 +237,7 @@ class _GameScreenState extends State<GameScreen> {
       setState(() {
         _currentPlayer = response[randomIndex] as Map<String, dynamic>;
         _answerController.clear();
+        _selectedPlayerId = null; // Reset selected player for new question
       });
     } catch (e) {
       _showErrorDialog('Error fetching question: $e');
@@ -269,100 +253,123 @@ class _GameScreenState extends State<GameScreen> {
   // ============================================================================
 
   /// Start listening for voice input using speech_to_text
-  Future<void> _startListening() async {
-    // Check if speech is available
-    if (!_speechAvailable) {
-      _showErrorDialog(
-        'Speech recognition is not available on this device. '
-        'Please try typing your answer instead.',
-      );
+
+  // ============================================================================
+  // AUTOCOMPLETE SEARCH LOGIC
+  // ============================================================================
+
+  /// Handle text change in answer field with debouncing
+  void _onAnswerTextChanged(String value) {
+    // Cancel previous debounce timer
+    _debounceTimer?.cancel();
+
+    // If empty, hide suggestions
+    if (value.trim().isEmpty) {
+      setState(() {
+        _suggestions = [];
+        _showSuggestions = false;
+      });
       return;
     }
 
-    // Check microphone permission
-    final status = await Permission.microphone.status;
-    if (!status.isGranted) {
-      final newStatus = await Permission.microphone.request();
-      if (!newStatus.isGranted) {
-        _showErrorDialog('Microphone permission denied.');
-        return;
-      }
-    }
-
-    setState(() {
-      _isListening = true;
+    // Debounce search for 300ms to avoid too many requests
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      _performSearch(value);
     });
+  }
 
+  /// Perform fuzzy search for player suggestions
+  Future<void> _performSearch(String query) async {
     try {
-      await _speechToText.listen(
-        onResult: (result) {
-          if (result.finalResult) {
-            setState(() {
-              _answerController.text = result.recognizedWords;
-              _isListening = false;
-            });
-          }
-        },
-        listenFor: const Duration(seconds: 15), // Max listening time
-        pauseFor: const Duration(seconds: 3), // Stop after 3s of silence
-        partialResults: false, // Only show final results
-        localeId: 'en_US', // English (US)
-        cancelOnError: true,
-        listenMode: ListenMode.confirmation,
+      final results = await _searchService.searchPlayers(
+        query,
+        limit: 3, // Show top 5 suggestions
       );
-    } catch (e) {
-      _showErrorDialog('Error during voice recognition: $e');
+
       setState(() {
-        _isListening = false;
+        _suggestions = results;
+        _showSuggestions = results.isNotEmpty;
+      });
+    } catch (e) {
+      debugPrint('Error performing search: $e');
+      setState(() {
+        _suggestions = [];
+        _showSuggestions = false;
       });
     }
   }
 
-  /// Stop listening for voice input
-  void _stopListening() {
-    _speechToText.stop();
+  /// Select a suggestion from the autocomplete dropdown
+  /// Stores the player's ID for validation and auto-validates immediately
+  void _selectSuggestion(PlayerSearchResult suggestion) {
     setState(() {
-      _isListening = false;
+      _answerController.text = suggestion.displayName;
+      _selectedPlayerId = suggestion.id; // Store the player's unique ID for validation
+      _suggestions = [];
+      _showSuggestions = false;
+    });
+    _answerFocusNode.unfocus();
+
+    // Auto-validate the selected suggestion immediately using ID comparison
+    _validateAnswer();
+  }
+
+  /// Hide autocomplete suggestions
+  void _hideSuggestions() {
+    setState(() {
+      _showSuggestions = false;
     });
   }
+
 
   // ============================================================================
   // ANSWER VALIDATION LOGIC
   // ============================================================================
 
-  /// Validate the user's answer against the correct answer
-  void _validateAnswer() {
+  /// Validate the user's answer by comparing selected player ID with current question's player ID
+  /// This ensures exact matches using unique Supabase identifiers, preventing fuzzy mismatches
+  Future<void> _validateAnswer() async {
     if (_currentPlayer == null) {
       return;
     }
 
-    final userAnswer = _answerController.text.trim();
-    if (userAnswer.isEmpty) {
-      _showErrorDialog('Please enter an answer or use voice input.');
+    // Check if a player was selected from suggestions (required for validation)
+    if (_selectedPlayerId == null) {
+      _showErrorDialog('Please select a player from the list.');
       return;
     }
 
-    // Get the correct answer from the current player
-    final correctAnswer = _currentPlayer!['answer']?.toString() ?? '';
+    // Hide suggestions when validating
+    _hideSuggestions();
 
-    // Perform case-insensitive partial match
-    final isCorrect =
-        userAnswer.toLowerCase().contains(correctAnswer.toLowerCase()) ||
-        correctAnswer.toLowerCase().contains(userAnswer.toLowerCase());
+    // Get the current question's player ID for comparison
+    final correctPlayerId = _currentPlayer!['id'] as int?;
+
+    if (correctPlayerId == null) {
+      _showErrorDialog('Error: Question data is invalid.');
+      return;
+    }
+
+    // Compare the selected player ID with the current question's player ID
+    // This guarantees exact matches and eliminates false positives from similar names
+    final isCorrect = _selectedPlayerId == correctPlayerId;
 
     setState(() {
       _totalAnswered++;
       if (isCorrect) {
         _score++;
       }
+      // Reset selected player ID for next question
+      _selectedPlayerId = null;
     });
 
     if (isCorrect) {
       // Show success dialog and load next question
+      final correctAnswer = _currentPlayer!['answer']?.toString() ?? '';
       _showSuccessDialog(correctAnswer);
     } else {
-      // Show retry prompt with hint
-      _showRetryDialog(correctAnswer);
+      // Show error message for incorrect answer
+      _showIncorrectAnswerDialog();
     }
   }
 
@@ -553,8 +560,9 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  /// Show retry dialog when answer is incorrect
-  void _showRetryDialog(String correctAnswer) {
+
+  /// Show dialog for incorrect answer (strict validation)
+  void _showIncorrectAnswerDialog() {
     showDialog(
       context: context,
       builder: (context) => BackdropFilter(
@@ -569,51 +577,24 @@ class _GameScreenState extends State<GameScreen> {
             children: [
               Icon(Icons.close_rounded, color: Colors.red, size: 32),
               SizedBox(width: 12),
-              Text('Try Again!', style: TextStyle(color: Colors.white)),
+              Text('Incorrect', style: TextStyle(color: Colors.white)),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Not quite right!',
-                style: TextStyle(color: Colors.white70),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Hint: ${_getHint()}',
-                style: const TextStyle(
-                  color: Color(0xFFFFA726),
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
+          content: const Text(
+            'Incorrect – try again!',
+            style: TextStyle(color: Colors.white70),
           ),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text(
-                'Try Again',
-                style: TextStyle(color: Colors.white70),
-              ),
-            ),
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.red.withOpacity(0.6),
-                    Colors.redAccent.withOpacity(0.4),
-                  ],
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFA726), Color(0xFFFF8A00)],
                 ),
               ),
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  _showSuccessDialog(correctAnswer);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
@@ -624,7 +605,7 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 ),
                 child: const Text(
-                  'Show Answer',
+                  'Try Again',
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -634,6 +615,7 @@ class _GameScreenState extends State<GameScreen> {
       ),
     );
   }
+
 
   /// Show error dialog
   void _showErrorDialog(String message) {
@@ -682,22 +664,6 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  /// Get hint based on current player data
-  String _getHint() {
-    if (_currentPlayer == null) return 'Try again!';
-
-    // Provide hint from career path or category
-    if (_currentPlayer!['career_path'] != null &&
-        _currentPlayer!['career_path'].toString().isNotEmpty) {
-      return _currentPlayer!['career_path'];
-    }
-
-    if (_currentPlayer!['Category'] != null) {
-      return 'Category: ${_currentPlayer!['Category']}';
-    }
-
-    return 'Think about famous football players!';
-  }
 
   // ============================================================================
   // UI BUILD METHOD
@@ -710,7 +676,7 @@ class _GameScreenState extends State<GameScreen> {
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // Background with image, gradient, and blur
+          // Background with image and gradient (blur removed for performance)
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -724,14 +690,10 @@ class _GameScreenState extends State<GameScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0x99000000), // Black with 0.6 opacity
-                    Color(0x00000000), // Transparent
+                    Color(0xBB000000), // Slightly darker overlay to compensate for removed blur
+                    Color(0x44000000), // Semi-transparent
                   ],
                 ),
-              ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-                child: Container(color: Colors.transparent),
               ),
             ),
           ),
@@ -792,22 +754,12 @@ class _GameScreenState extends State<GameScreen> {
 
                              
  
-                              const SizedBox(height: 30),
-
-                              // Hint section (career path or category)
-                              _buildHintSection(),
-
-                              const SizedBox(height: 30),
 
                               // Answer input section
                               _buildAnswerInputSection(),
 
                               const SizedBox(height: 30),
 
-                              // Submit button
-                              _buildSubmitButton(),
-
-                              const SizedBox(height: 20),
                             ],
                           ),
                         ),
@@ -837,127 +789,121 @@ class _GameScreenState extends State<GameScreen> {
           ],
         ),
       ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.all(Radius.circular(20)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 5),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.all(Radius.circular(20)),
-              color: Colors.white.withOpacity(0.1),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.all(Radius.circular(20)),
+          color: const Color.fromARGB(180, 33, 43, 31), // Solid color instead of blur
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              // Back button
+              IconButton(
+                onPressed: () {
+                  _gameTimer?.cancel();
+                  Navigator.of(context).pop();
+                },
+                icon: const Icon(Icons.arrow_back_rounded),
+                color: Colors.white,
+                iconSize: 24,
               ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  // Back button
-                  IconButton(
-                    onPressed: () {
-                      _gameTimer?.cancel();
-                      Navigator.of(context).pop();
-                    },
-                    icon: const Icon(Icons.arrow_back_rounded),
+              const SizedBox(width: 12),
+              // Title
+              Expanded(
+                child: Text(
+                  widget.config?.title ?? 'Game Mode',
+                  style: const TextStyle(
                     color: Colors.white,
-                    iconSize: 24,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(width: 12),
-                  // Title
-                  Expanded(
-                    child: Text(
-                      widget.config?.title ?? 'Game Mode',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Timer (if Rush mode)
+              if (_remainingSeconds != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _remainingSeconds! < 30
+                        ? Colors.red.withOpacity(0.3)
+                        : Colors.blue.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _remainingSeconds! < 30
+                          ? Colors.red.withOpacity(0.6)
+                          : Colors.blue.withOpacity(0.5),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.timer,
+                        color: _remainingSeconds! < 30
+                            ? Colors.red
+                            : Colors.blue,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${_remainingSeconds! ~/ 60}:${(_remainingSeconds! % 60).toString().padLeft(2, '0')}',
+                        style: TextStyle(
+                          color: _remainingSeconds! < 30
+                              ? Colors.red
+                              : Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              // Score display
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFA726).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFFFA726).withOpacity(0.5),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.star_rounded,
+                      color: Color(0xFFFFA726),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$_score / $_totalAnswered',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Timer (if Rush mode)
-                  if (_remainingSeconds != null) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _remainingSeconds! < 30
-                            ? Colors.red.withOpacity(0.3)
-                            : Colors.blue.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: _remainingSeconds! < 30
-                              ? Colors.red.withOpacity(0.6)
-                              : Colors.blue.withOpacity(0.5),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.timer,
-                            color: _remainingSeconds! < 30
-                                ? Colors.red
-                                : Colors.blue,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${_remainingSeconds! ~/ 60}:${(_remainingSeconds! % 60).toString().padLeft(2, '0')}',
-                            style: TextStyle(
-                              color: _remainingSeconds! < 30
-                                  ? Colors.red
-                                  : Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                   ],
-                  // Score display
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFA726).withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: const Color(0xFFFFA726).withOpacity(0.5),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          color: Color(0xFFFFA726),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '$_score / $_totalAnswered',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -985,40 +931,37 @@ class _GameScreenState extends State<GameScreen> {
           ],
         ),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 5),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Colors.white.withOpacity(0.1),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              children: [
-                const Icon(
-                  Icons.question_mark_rounded,
-                  color: Color(0xFFFFA726),
-                  size: 48,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  question,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: const Color.fromARGB(160, 33, 43, 31), // Solid color instead of blur
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
           ),
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.question_mark_rounded,
+              color: Color(0xFFFFA726),
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              question,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            // Career path timeline
+            _buildCareerTimeline(),
+          ],
         ),
       ),
     );
@@ -1028,97 +971,150 @@ class _GameScreenState extends State<GameScreen> {
   String _buildQuestionText() {
     if (_currentPlayer == null) return 'Loading...';
 
-    final careerPath = _currentPlayer!['career_path']?.toString() ?? '';
-
-    if (careerPath.isNotEmpty) {
-      return 'Which player had this career path?\n$careerPath';
-    }
-
-    return 'Who is this famous football player?';
+    return 'Which player had this career path?';
   }
 
+  /// Parse career path string into structured data for timeline display
+  List<Map<String, String>> _parseCareerPath(String careerPath) {
+    if (careerPath.trim().isEmpty) return [];
 
-  /// Build hint section with glass morphism
-  Widget _buildHintSection() {
-    final category = _currentPlayer!['Category']?.toString();
+    // Split by semicolon and filter out empty entries
+    final entries = careerPath.split(';')
+        .map((entry) => entry.trim())
+        .where((entry) => entry.isNotEmpty)
+        .toList();
 
-    if (category == null || category.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    return entries.map((entry) {
+      // Extract club name and years from format like "Bayer 04 Leverkusen (2020–2025)"
+      final regex = RegExp(r'(.+?)\s*\((\d+[^)]*)\)');
+      final match = regex.firstMatch(entry);
+
+      if (match != null) {
+        return {
+          'club': match.group(1)?.trim() ?? '',
+          'years': match.group(2)?.trim() ?? '',
+        };
+      }
+
+      // Fallback: if parsing fails, return the whole entry as club name
+      return {
+        'club': entry,
+        'years': '',
+      };
+    }).toList();
+  }
+
+  /// Build career path timeline widget with vertical layout
+  Widget _buildCareerTimeline() {
+    if (_currentPlayer == null) return const SizedBox.shrink();
+
+    final careerPath = _currentPlayer!['career_path']?.toString() ?? '';
+    final careerEntries = _parseCareerPath(careerPath);
+
+    if (careerEntries.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.all(2),
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFFFFA726).withOpacity(0.3),
-            const Color(0xFFFFA726).withOpacity(0.1),
-          ],
+        color: const Color.fromARGB(100, 33, 43, 31), // Semi-transparent background
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 1,
         ),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.white.withOpacity(0.1),
-              border: Border.all(
-                color: const Color(0xFFFFA726).withOpacity(0.5),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.lightbulb_outline,
-                  color: Color(0xFFFFA726),
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Category: $category',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Timeline entries
+          ...careerEntries.asMap().entries.map((entry) {
+            final careerEntry = entry.value;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Timeline bullet/dot
+                  Container(
+                    width: 12,
+                    height: 12,
+                    margin: const EdgeInsets.only(right: 12, top: 2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFA726), Color(0xFFFF8A00)],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFFA726).withOpacity(0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ),
+                  // Club info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Club name
+                        Text(
+                          careerEntry['club']!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        // Years
+                        if (careerEntry['years']!.isNotEmpty)
+                          Text(
+                            careerEntry['years']!,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
 
-  /// Build answer input section with text field and microphone button
+  /// Build answer input section with text field and autocomplete
   Widget _buildAnswerInputSection() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Text input field with glass morphism
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                colors: [
-                  const Color.fromARGB(80, 33, 43, 31),
-                  const Color.fromARGB(40, 33, 43, 31),
-                ],
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 5),
+        Row(
+          children: [
+            // Text input field with glass morphism
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color.fromARGB(80, 33, 43, 31),
+                      const Color.fromARGB(40, 33, 43, 31),
+                    ],
+                  ),
+                ),
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    color: Colors.white.withOpacity(0.1),
+                    color: const Color.fromARGB(120, 33, 43, 31), // Solid color instead of blur
                     border: Border.all(
                       color: Colors.white.withOpacity(0.2),
                       width: 1,
@@ -1126,6 +1122,7 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                   child: TextField(
                     controller: _answerController,
+                    focusNode: _answerFocusNode,
                     style: const TextStyle(color: Colors.white, fontSize: 16),
                     decoration: InputDecoration(
                       hintText: 'Type your answer...',
@@ -1135,119 +1132,144 @@ class _GameScreenState extends State<GameScreen> {
                         horizontal: 20,
                         vertical: 16,
                       ),
+                      suffixIcon: _answerController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(
+                                Icons.clear,
+                                color: Colors.white54,
+                              ),
+                              onPressed: () {
+                                _answerController.clear();
+                                _hideSuggestions();
+                              },
+                            )
+                          : null,
                     ),
-                    onSubmitted: (_) => _validateAnswer(),
+                    onChanged: _onAnswerTextChanged,
                   ),
                 ),
               ),
             ),
-          ),
+
+          ],
         ),
 
-        const SizedBox(width: 12),
-
-        // Microphone button with glass morphism
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: _isListening
-                  ? [
-                      Colors.red.withOpacity(0.8),
-                      Colors.redAccent.withOpacity(0.6),
-                    ]
-                  : [
-                      const Color(0xFFFFA726).withOpacity(0.8),
-                      const Color(0xFFFF8A00).withOpacity(0.6),
-                    ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: (_isListening ? Colors.red : const Color(0xFFFFA726))
-                    .withOpacity(0.4),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: ClipOval(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _isListening ? _stopListening : _startListening,
-                  customBorder: const CircleBorder(),
-                  child: Center(
-                    child: Icon(
-                      _isListening ? Icons.mic : Icons.mic_none,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+        // Autocomplete dropdown
+        if (_showSuggestions && _suggestions.isNotEmpty)
+          _buildAutocompleteDropdown(),
       ],
     );
   }
 
-  /// Build submit button with glass morphism
-  Widget _buildSubmitButton() {
+  /// Build autocomplete dropdown with suggestions
+  Widget _buildAutocompleteDropdown() {
     return Container(
-      height: 56,
+      margin: const EdgeInsets.only(top: 8),
+      constraints: const BoxConstraints(maxHeight: 200),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFA726), Color(0xFFFF8A00)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            const Color.fromARGB(120, 33, 43, 31),
+            const Color.fromARGB(80, 33, 43, 31),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFFA726).withOpacity(0.5),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: ElevatedButton(
-            onPressed: _validateAnswer,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              foregroundColor: Colors.white,
-              shadowColor: Colors.transparent,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.check_circle_outline, size: 24),
-                SizedBox(width: 12),
-                Text(
-                  'Submit Answer',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: const Color.fromARGB(180, 33, 43, 31), // Solid color instead of blur
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: ListView.builder(
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          itemCount: _suggestions.length,
+          itemBuilder: (context, index) {
+            final suggestion = _suggestions[index];
+            return Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _selectSuggestion(suggestion),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: index < _suggestions.length - 1
+                        ? Border(
+                            bottom: BorderSide(
+                              color: Colors.white.withOpacity(0.1),
+                              width: 1,
+                            ),
+                          )
+                        : null,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.person_outline,
+                        color: Color(0xFFFFA726),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              suggestion.displayName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            if (suggestion.category != null &&
+                                suggestion.category!.isNotEmpty)
+                              Text(
+                                suggestion.category!,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 12,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (suggestion.similarity != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFA726).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${(suggestion.similarity! * 100).toStringAsFixed(0)}%',
+                            style: const TextStyle(
+                              color: Color(0xFFFFA726),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
+
 }
+
