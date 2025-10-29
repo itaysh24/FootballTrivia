@@ -15,6 +15,18 @@ import '../services/supabase/supabase_search.dart';
 /// - Validates answers with partial case-insensitive matching
 /// - Automatically loads next question after correct answer
 /// - Supports multiple game modes through GameConfiguration
+///
+/// Layout Structure (Z-index order):
+/// 1. App Bar (top layer, always visible, fixed position)
+/// 2. Autocomplete Dropdown (overlay, appears above question when active)
+/// 3. Question Card (fixed, contains question text and scrollable career path)
+/// 4. Answer Input Field (fixed position at bottom)
+/// 5. Background (base layer)
+///
+/// Scrolling Behavior:
+/// - Global screen: Fixed, no scrolling
+/// - Career path timeline: Scrollable when content exceeds available space
+/// - Keyboard: Screen moves up to keep input visible (resizeToAvoidBottomInset: true)
 /// ============================================================================
 
 class GameScreen extends StatefulWidget {
@@ -788,7 +800,8 @@ class _GameScreenState extends State<GameScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
+      extendBodyBehindAppBar: false,
+      resizeToAvoidBottomInset: true, // Allow screen to move up when keyboard appears
       body: Stack(
         children: [
           // Background with image and gradient (blur removed for performance)
@@ -813,71 +826,79 @@ class _GameScreenState extends State<GameScreen> {
             ),
           ),
 
-          // Main content
+          // Main content with proper layering
           SafeArea(
             child: Column(
               children: [
-                // Glass morphism header with back button and score
+                // App bar - always on top, fixed position
                 _buildGlassHeader(context),
 
-                // Game content
+                // Game content area with overlay support
                 Expanded(
-                  child: _isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xFFFFA726),
-                          ),
-                        )
-                      : _currentPlayer == null
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text(
-                                'No question loaded',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 18,
-                                ),
+                  child: Stack(
+                    children: [
+                      // Base content layer
+                      _isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: Color(0xFFFFA726),
                               ),
-                              const SizedBox(height: 20),
-                              ElevatedButton(
-                                onPressed: _fetchRandomQuestion,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFFA726),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
+                            )
+                          : _currentPlayer == null
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    'No question loaded',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 18,
+                                    ),
                                   ),
-                                ),
-                                child: const Text(
-                                  'Load Question',
-                                  style: TextStyle(color: Colors.black),
-                                ),
+                                  const SizedBox(height: 20),
+                                  ElevatedButton(
+                                    onPressed: _fetchRandomQuestion,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFFFA726),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Load Question',
+                                      style: TextStyle(color: Colors.black),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        )
-                      : SingleChildScrollView(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Question card
-                              _buildQuestionCard(),
+                            )
+                          : Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Question card (fixed, not scrollable)
+                                  Expanded(
+                                    child: _buildQuestionCard(),
+                                  ),
 
-                              const SizedBox(height: 30),
+                                  const SizedBox(height: 20),
+                                 
+                                  // Answer input section (fixed position)
+                                  _buildAnswerInputSection(),
 
-                             
- 
+                                  const SizedBox(height: 20),
 
-                              // Answer input section
-                              _buildAnswerInputSection(),
-
-                              const SizedBox(height: 30),
-
-                            ],
-                          ),
-                        ),
+                                ],
+                              ),
+                            ),
+                      
+                      // Dropdown overlay layer - appears above all content
+                      if (_showSuggestions && _suggestions.isNotEmpty && _currentPlayer != null)
+                        _buildSuggestionOverlay(),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1067,12 +1088,7 @@ class _GameScreenState extends State<GameScreen> {
         ),
         child: Column(
           children: [
-            const Icon(
-              Icons.question_mark_rounded,
-              color: Color(0xFFFFA726),
-              size: 48,
-            ),
-            const SizedBox(height: 16),
+            // Question text (centered)
             Text(
               question,
               style: const TextStyle(
@@ -1083,7 +1099,7 @@ class _GameScreenState extends State<GameScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            // Career path timeline
+            // Career path timeline (scrollable)
             _buildCareerTimeline(),
           ],
         ),
@@ -1095,7 +1111,7 @@ class _GameScreenState extends State<GameScreen> {
   String _buildQuestionText() {
     if (_currentPlayer == null) return 'Loading...';
 
-    return 'Which player had this career path?';
+    return 'Which player had this career?';
   }
 
   /// Parse career path string into structured data for timeline display
@@ -1128,7 +1144,7 @@ class _GameScreenState extends State<GameScreen> {
     }).toList();
   }
 
-  /// Build career path timeline widget with vertical layout
+  /// Build career path timeline widget with vertical layout (scrollable)
   Widget _buildCareerTimeline() {
     if (_currentPlayer == null) return const SizedBox.shrink();
 
@@ -1137,23 +1153,25 @@ class _GameScreenState extends State<GameScreen> {
 
     if (careerEntries.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: const Color.fromARGB(100, 33, 43, 31), // Semi-transparent background
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Timeline entries
-          ...careerEntries.asMap().entries.map((entry) {
+    return Flexible(
+      child: SingleChildScrollView(
+        child: Container(
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: const Color.fromARGB(100, 33, 43, 31), // Semi-transparent background
+            border: Border.all(
+              color: Colors.white.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Timeline entries
+              ...careerEntries.asMap().entries.map((entry) {
             final careerEntry = entry.value;
 
             return Padding(
@@ -1211,84 +1229,88 @@ class _GameScreenState extends State<GameScreen> {
               ),
             );
           }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build answer input section with text field (fixed position)
+  Widget _buildAnswerInputSection() {
+    return SizedBox(
+      height: 60, // Fixed height to prevent layout shift
+      child: Row(
+        children: [
+          // Text input field with glass morphism
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  colors: [
+                    const Color.fromARGB(80, 33, 43, 31),
+                    const Color.fromARGB(40, 33, 43, 31),
+                  ],
+                ),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: const Color.fromARGB(120, 33, 43, 31), // Solid color instead of blur
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: TextField(
+                  controller: _answerController,
+                  focusNode: _answerFocusNode,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  decoration: InputDecoration(
+                    hintText: 'Type your answer...',
+                    hintStyle: const TextStyle(color: Colors.white38),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    suffixIcon: _answerController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Colors.white54,
+                            ),
+                            onPressed: () {
+                              _answerController.clear();
+                              _hideSuggestions();
+                            },
+                          )
+                        : null,
+                  ),
+                  onChanged: _onAnswerTextChanged,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  /// Build answer input section with text field and autocomplete
-  Widget _buildAnswerInputSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            // Text input field with glass morphism
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color.fromARGB(80, 33, 43, 31),
-                      const Color.fromARGB(40, 33, 43, 31),
-                    ],
-                  ),
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: const Color.fromARGB(120, 33, 43, 31), // Solid color instead of blur
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: TextField(
-                    controller: _answerController,
-                    focusNode: _answerFocusNode,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
-                    decoration: InputDecoration(
-                      hintText: 'Type your answer...',
-                      hintStyle: const TextStyle(color: Colors.white38),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
-                      suffixIcon: _answerController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(
-                                Icons.clear,
-                                color: Colors.white54,
-                              ),
-                              onPressed: () {
-                                _answerController.clear();
-                                _hideSuggestions();
-                              },
-                            )
-                          : null,
-                    ),
-                    onChanged: _onAnswerTextChanged,
-                  ),
-                ),
-              ),
-            ),
-
-          ],
-        ),
-
-        // Autocomplete dropdown
-        if (_showSuggestions && _suggestions.isNotEmpty)
-          _buildAutocompleteDropdown(),
-      ],
+  /// Build suggestion overlay - positioned above all content except app bar
+  Widget _buildSuggestionOverlay() {
+    return Positioned(
+      left: 20,
+      right: 20,
+      bottom: 100, // Position above input field, allows overlay on question area
+      child: _buildAutocompleteDropdown(),
     );
   }
 
   /// Build autocomplete dropdown with suggestions
   Widget _buildAutocompleteDropdown() {
     return Container(
-      margin: const EdgeInsets.only(top: 8),
       constraints: const BoxConstraints(maxHeight: 200),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),

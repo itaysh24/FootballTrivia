@@ -13,7 +13,7 @@ dependencies:
   provider: ^6.1.5
   animated_bottom_navigation_bar: ^1.4.0
   animated_leaderboard: ^0.1.4
-  supabase_flutter: ^2.3.4
+  supabase_flutter: ^2.5.4
   just_audio: ^0.10.5
   speech_to_text: ^7.3.0
   shared_preferences: ^2.2.2
@@ -21,6 +21,8 @@ dependencies:
   infinite_carousel: ^1.0.2
   xml: ^6.5.0
   permission_handler: ^12.0.1
+  google_sign_in: ^6.2.1
+  flutter_native_splash: ^2.4.7
 
   
 
@@ -29,6 +31,14 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   
+
+# Native Splash Screen Configuration
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/images/Logo.png
+  android: true
+  ios: true
+  web: false
 
 flutter:
   uses-material-design: true
@@ -39,7 +49,11 @@ flutter:
     - assets/images/Logo.png
     - assets/images/Layer 3.png
     - assets/images/GUESS THE PLAYER.png
+    - assets/images/google_icon.png
+    - assets/images/splash_bg.png
     - assets/images/QuestionsFrames/
     - assets/images/backgrounds/
     - assets/images/Leagues/
     - assets/images/maps/
+
+

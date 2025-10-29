@@ -5,6 +5,7 @@ import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'Pages/profile/profile_page.dart';
 import 'pages/leaderboard/leaderboard_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,19 +16,27 @@ import 'widgets/tutorial_popup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/RTG/road_to_glory.dart';
 import 'pages/game_screen.dart';
+import 'auth_screen.dart';
 
 // Global music service instance
 final musicService = MusicService();
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // Preserve native splash screen while app initializes
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  
+  // Initialize Supabase
   await Supabase.initialize(
     url: 'https://nuvbzopwnnyvovdohwao.supabase.co',
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51dmJ6b3B3bm55dm92ZG9od2FvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNjg0ODIsImV4cCI6MjA3Mzg0NDQ4Mn0.d0-9hnS7ahKNKRnZaFJaHQ4_teMMrUGtQnI3QDH24d8',
   );
+  
+  // Preload music
   final musicService = MusicService();
   await musicService.preloadAllTracks();
+  
   runApp(MyApp(musicService: musicService));
 }
 
@@ -108,7 +117,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             ),
           ),
         ),
-        home: MyHomePage(),
+        home: const AuthChecker(),
         routes: {
           '/game_modes': (context) => const GameModesPage(),
           '/training': (context) => const GameScreen(), // Universal game screen
@@ -157,9 +166,308 @@ class MyAppState extends ChangeNotifier {
   }
 }
 
+// ============================================================================
+// AUTH CHECKER - Checks authentication immediately after Flutter loads
+// ============================================================================
+// This widget shows very briefly (native splash is still visible)
+// and immediately navigates to AuthScreen or MainScreen based on login status
+// ============================================================================
+class AuthChecker extends StatefulWidget {
+  const AuthChecker({super.key});
+
+  @override
+  State<AuthChecker> createState() => _AuthCheckerState();
+}
+
+class _AuthCheckerState extends State<AuthChecker> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthAndNavigate();
+  }
+
+  Future<void> _checkAuthAndNavigate() async {
+    // Check Supabase authentication session
+    final session = Supabase.instance.client.auth.currentSession;
+    final bool isLoggedIn = session != null;
+    
+    // Optional: Small delay for smooth transition (2 seconds to show splash)
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    // Remove native splash screen before navigating
+    FlutterNativeSplash.remove();
+    
+    // Small delay to let splash removal animation complete
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    if (!mounted) return;
+
+    // Navigate based on auth status
+    if (isLoggedIn) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainScreen()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // This screen shows very briefly while auth check happens
+    // Native splash is still visible to the user
+    return const Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFFA726)),
+        ),
+      ),
+    );
+  }
+}
+
+// MainScreen is the main app screen with bottom navigation
+// (exposed for use by SplashScreen and AuthScreen)
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+// Legacy name for compatibility
 class MyHomePage extends StatefulWidget {
   @override
   State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  var selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkTutorialPopup();
+  }
+
+  Future<void> _checkTutorialPopup() async {
+    final prefs = await SharedPreferences.getInstance();
+    final skipTutorialPopup = prefs.getBool('skipTutorialPopup') ?? false;
+
+    if (!skipTutorialPopup) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) {
+            return TutorialPopup(
+              onYes: () {
+                Navigator.of(context).pop();
+                Navigator.pushReplacementNamed(context, '/tutorial');
+              },
+              onNo: () {
+                Navigator.of(context).pop();
+                // Stay on current page (HomePage)
+              },
+              onNoRemember: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('skipTutorialPopup', true);
+                Navigator.of(context).pop();
+                // Stay on current page (HomePage)
+              },
+            );
+          },
+        );
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+
+    Widget page;
+    switch (selectedIndex) {
+      case 0:
+        page = HomePage();
+        break;
+      case 1:
+        page = LeaderboardPage();
+        break;
+      case 2:
+        page = GameModesPage();
+        break;
+      case 3:
+        page = ProfilePage();
+        break;
+      case 4:
+        page = ShopPage();
+        break;
+      default:
+        throw UnimplementedError('no widget for $selectedIndex');
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBody: true,
+      body: Stack(
+        children: [
+          // Background with image, gradient, and blur
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/images/background.jpg"),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x99000000), // Black with 0.6 opacity
+                    Color(0x00000000), // Transparent
+                  ],
+                ),
+              ),
+              child: appState.blurLevel > 0
+                  ? BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: appState.blurLevel,
+                        sigmaY: appState.blurLevel,
+                      ),
+                      child: Container(color: Colors.transparent),
+                    )
+                  : Container(),
+            ),
+          ),
+          // Content overlay (not blurred) with padding for glass header and navigation bar
+          Positioned(
+            top: 40, // Height of glass header
+            left: 0,
+            right: 0,
+            bottom: 1, // Height of navigation bar + SafeArea
+            child: page,
+          ),
+          // Glass header with SafeArea
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.all(Radius.circular(20)),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      const Color.fromARGB(
+                        120,
+                        33,
+                        43,
+                        31,
+                      ), // Semi-transparent dark
+                      const Color.fromARGB(60, 33, 43, 31), // More transparent
+                      Colors.transparent, // Fully transparent at bottom
+                    ],
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(20)),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 5),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(20),
+                        ),
+                        color: Colors.white.withOpacity(0.1),
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.white.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 2,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () => musicService.nextSong(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange.withOpacity(0.8),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: const Text("Next Song"),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Navigation bar overlay with SafeArea
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              child: AnimatedBottomNavigationBar(
+                icons: iconList,
+                activeIndex: selectedIndex,
+                gapLocation: GapLocation.none,
+                notchSmoothness: NotchSmoothness.verySmoothEdge,
+                leftCornerRadius: 32,
+                rightCornerRadius: 32,
+                onTap: (index) {
+                  setState(() {
+                    selectedIndex = index;
+                  });
+                },
+                activeColor: const Color(0xFFFFA726), // Primary orange
+                inactiveColor: const Color.fromARGB(
+                  255,
+                  156,
+                  155,
+                  155,
+                ), // Gray for inactive items
+                backgroundColor: const Color.fromARGB(
+                  230,
+                  33,
+                  43,
+                  31,
+                ), // Semi-transparent dark background
+                splashColor: const Color(0xFFFFA726), // Orange splash effect
+                iconSize: 24,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _MyHomePageState extends State<MyHomePage> {
