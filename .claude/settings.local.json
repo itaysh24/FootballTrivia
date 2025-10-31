@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where:*)",
+      "Bash(flutter --version:*)",
+      "Bash(dart --version:*)",
+      "Bash(cmd /c \"C:\\Flutter\\flutter\\bin\\flutter.bat\" --version)",
+      "Bash(cmd /c \"C:\\Flutter\\flutter\\bin\\dart.bat\" --version)",
+      "Bash(flutter doctor:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
