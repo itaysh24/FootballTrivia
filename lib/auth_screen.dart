@@ -18,16 +18,23 @@ class AuthScreen extends StatelessWidget {
       backgroundColor: Colors.black,
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF1B2F1B), // Dark green
-              Color(0xFF000000), // Black
-            ],
+          image: DecorationImage(
+            image: AssetImage("assets/images/Gemini_Generated_Image_p7lysbp7lysbp7ly.png"),
+            fit: BoxFit.cover,
           ),
         ),
-        child: SafeArea(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0x66000000), // Semi-transparent black overlay
+                Color(0x99000000), // Darker at bottom
+              ],
+            ),
+          ),
+          child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
@@ -137,6 +144,7 @@ class AuthScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

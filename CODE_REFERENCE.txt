@@ -1,0 +1,65 @@
+FOOTBALL TRIVIA - AUTHENTICATION CODE REFERENCE
+
+AUTHENTICATION-RELATED FILES AND LINE NUMBERS:
+
+1. lib/main.dart
+   - Lines 30-34: Supabase initialization
+   - Lines 175-233: AuthChecker widget (checks auth status)
+   - Line 191: Session check: Supabase.instance.client.auth.currentSession
+
+2. lib/auth_screen.dart
+   - Lines 79-111: Google Sign-In button (simulated)
+   - Lines 115-124: Guest button (simulated)
+   - Lines 7-12: _simulateLogin() method (just navigates)
+
+3. lib/pages/Profile/profile_header.dart
+   - Line 30: Hardcoded username "Ohad Haim"
+
+4. lib/pages/Profile/profile_info.dart
+   - Lines 6-10: Hardcoded stats (12 wins, 1480 score, 16 streak)
+
+5. lib/services/progress_service.dart
+   - Lines 12, 19: Storage key format: 'rtg_progress_' + leagueId
+   - No user-specific tracking
+
+6. lib/pages/leaderboard/leaderboard_page.dart
+   - Lines 17-26: Fetches all leaderboard data (no user filtering)
+
+7. lib/models/player.dart
+   - Has: displayName, score
+   - Missing: user_id, user association
+
+8. lib/pages/game_screen.dart
+   - Lines 62-66: Score variables (not user-linked)
+
+9. pubspec.yaml
+   - Line 24: google_sign_in ^6.2.1 (imported but not used)
+   - Line 16: supabase_flutter ^2.5.4 (for database only)
+
+10. android/app/google-services.json
+    - Firebase config exists but not actively used
+
+MISSING COMPONENTS:
+
+1. User model class (lib/models/user.dart)
+2. AuthProvider class (lib/providers/auth_provider.dart)
+3. AuthService class (lib/services/auth_service.dart)
+4. Database: users table
+5. Database: user_stats table
+6. Database: game_sessions table
+7. Google OAuth integration code
+8. Guest user ID generation
+9. Session persistence logic
+10. Logout functionality
+
+KEY FINDINGS:
+
+- AuthChecker expects session but Supabase Auth NOT configured
+- All auth buttons are simulated (no real implementation)
+- User data is hardcoded (profile_header.dart line 30)
+- Stats are hardcoded (profile_info.dart lines 6-10)
+- Progress stored locally, not per-user
+- No user identification system
+- No score persistence per user
+- Google Sign-In package imported but completely unused
+
