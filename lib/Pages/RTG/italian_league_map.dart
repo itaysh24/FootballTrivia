@@ -414,6 +414,7 @@ class _ItalianLeagueMapScreenState extends State<ItalianLeagueMapScreen> {
                       level: levelNumber,
                       leagueName: 'Serie A',
                       leagueId: 'italian',
+                      databaseLeagueId: 1, // Serie A
                     ),
                   ),
                 ),

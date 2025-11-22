@@ -417,8 +417,9 @@ class _EnglishLeagueMapScreenState extends State<EnglishLeagueMapScreen> {
                   builder: (context) => GameScreen(
                     config: GameModeConfigurations.getRoadToGloryMode(
                       level: levelNumber,
-                      leagueName: 'english',
+                      leagueName: 'Premier League',
                       leagueId: 'english',
+                      databaseLeagueId: 2, // Premier League
                     ),
                   ),
                 ),

@@ -414,6 +414,7 @@ class _GermanLeagueMapScreenState extends State<GermanLeagueMapScreen> {
                       level: levelNumber,
                       leagueName: 'Bundesliga',
                       leagueId: 'german',
+                      databaseLeagueId: 3, // Bundesliga
                     ),
                   ),
                 ),

@@ -414,6 +414,7 @@ class _SpanishLeagueMapScreenState extends State<SpanishLeagueMapScreen> {
                       level: levelNumber,
                       leagueName: 'La Liga',
                       leagueId: 'spanish',
+                      databaseLeagueId: 4, // La Liga
                     ),
                   ),
                 ),

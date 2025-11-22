@@ -153,6 +153,7 @@ class GameModeConfigurations {
     required int level,
     required String leagueName,
     required String leagueId,
+    required int databaseLeagueId,
   }) {
     // Create progress service instance
     final progressService = ProgressService();
@@ -175,15 +176,15 @@ class GameModeConfigurations {
       onLevelComplete: onLevelComplete,
       questionFetcher: (supabase) async {
         try {
-          // Fetch one random player from the specified league
+          // Fetch one random player from the specified league using numeric league_id
           final response = await supabase
               .from('players')
               .select('player_id, first_name, last_name, career_path, answer, league_id')
-              .eq('league_id', leagueName)
+              .eq('league_id', databaseLeagueId)
               .limit(10); // Fetch 10 to have variety
 
           if (response.isEmpty) {
-            throw Exception('No questions available for league: $leagueName');
+            throw Exception('No questions available for league: $leagueName (ID: $databaseLeagueId)');
           }
 
           // Pick a random question from the results
@@ -261,6 +262,39 @@ class GameModeConfigurations {
         return 'Stars'; // Fallback to Stars category
     }
   }
+
+  /// ========================================================================
+  /// LEAGUE ID MAPPING FOR ROAD TO GLORY
+  /// ========================================================================
+  /// Maps league identifier strings to database league IDs.
+  /// Database league IDs:
+  /// - 1: Serie A (Italy)
+  /// - 2: Premier League (England)
+  /// - 3: Bundesliga (Germany)
+  /// - 4: La Liga (Spain)
+  /// - 5: Ligue 1 (France)
+  /// ========================================================================
+  static int getDatabaseLeagueId(String leagueId) {
+    switch (leagueId.toLowerCase()) {
+      case 'italian':
+      case 'italy':
+        return 1; // Serie A
+      case 'english':
+      case 'england':
+        return 2; // Premier League
+      case 'german':
+      case 'germany':
+        return 3; // Bundesliga
+      case 'spanish':
+      case 'spain':
+        return 4; // La Liga
+      case 'french':
+      case 'france':
+        return 5; // Ligue 1
+      default:
+        return 2; // Default to Premier League
+    }
+  }
 }
 
 /// ============================================================================
@@ -294,10 +328,12 @@ class GameModeNavigator {
     required String leagueId,
   }) {
     final leagueName = GameModeConfigurations.getLeagueNameForLevel(level);
+    final databaseLeagueId = GameModeConfigurations.getDatabaseLeagueId(leagueId);
     final config = GameModeConfigurations.getRoadToGloryMode(
       level: level,
       leagueName: leagueName,
       leagueId: leagueId,
+      databaseLeagueId: databaseLeagueId,
     );
     Navigator.push(
       context,

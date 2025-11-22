@@ -414,6 +414,7 @@ class _FrenchLeagueMapScreenState extends State<FrenchLeagueMapScreen> {
                       level: levelNumber,
                       leagueName: 'Ligue 1',
                       leagueId: 'french',
+                      databaseLeagueId: 5, // Ligue 1
                     ),
                   ),
                 ),
