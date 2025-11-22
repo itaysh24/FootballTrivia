@@ -29,7 +29,7 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.dev.football_trivia"
-        minSdk = flutter.minSdkVersion
+        minSdk = flutter.minSdkVersion  // Required for Google Sign-In
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"

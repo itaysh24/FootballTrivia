@@ -17,6 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/RTG/road_to_glory.dart';
 import 'pages/game_screen.dart';
 import 'auth_screen.dart';
+import 'widgets/auth_gate.dart';
 
 // Global music service instance
 final musicService = MusicService();
@@ -36,6 +37,9 @@ void main() async {
   // Preload music
   final musicService = MusicService();
   await musicService.preloadAllTracks();
+  
+  // Remove splash screen now that initialization is complete
+  FlutterNativeSplash.remove();
   
   runApp(MyApp(musicService: musicService));
 }
@@ -117,7 +121,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             ),
           ),
         ),
-        home: const AuthChecker(),
+        home: const AuthGate(),
         routes: {
           '/game_modes': (context) => const GameModesPage(),
           '/training': (context) => const GameScreen(), // Universal game screen

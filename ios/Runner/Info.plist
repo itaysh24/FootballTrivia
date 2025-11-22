@@ -49,5 +49,21 @@
 		<string>This app needs access to microphone for voice trivia functionality.</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<!-- Google Sign-In Configuration -->
+		<!-- TODO: Replace PLACEHOLDER_REVERSED_CLIENT_ID with REVERSED_CLIENT_ID from GoogleService-Info.plist -->
+		<!-- TODO: Replace PLACEHOLDER_IOS_CLIENT_ID with iOS CLIENT_ID from Google Cloud Console -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>PLACEHOLDER_REVERSED_CLIENT_ID</string>
+				</array>
+			</dict>
+		</array>
+		<key>GIDClientID</key>
+		<string>PLACEHOLDER_IOS_CLIENT_ID.apps.googleusercontent.com</string>
 	</dict>
 </plist>

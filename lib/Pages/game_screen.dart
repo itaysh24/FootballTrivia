@@ -86,6 +86,15 @@ class _GameScreenState extends State<GameScreen> {
   /// Whether to show autocomplete dropdown
   bool _showSuggestions = false;
 
+  /// Loading flag for ongoing fuzzy search requests
+  bool _isSearchingSuggestions = false;
+
+  /// Status message for empty or failed searches
+  String? _searchStatusMessage;
+
+  /// Indicates whether the current status message represents an error
+  bool _searchStatusIsError = false;
+
   /// Focus node for answer input
   final FocusNode _answerFocusNode = FocusNode();
 
@@ -226,11 +235,11 @@ class _GameScreenState extends State<GameScreen> {
       // Build query based on optional category filter
       PostgrestFilterBuilder query = _supabase
           .from('players')
-          .select('id, firstname, lastname, career_path, answer, Category');
+          .select('player_id, first_name, last_name, career_path, answer, league_id');
 
       // Apply category filter if provided
       if (widget.categoryFilter != null && widget.categoryFilter!.isNotEmpty) {
-        query = query.eq('Category', widget.categoryFilter!);
+        query = query.eq('player_id', widget.categoryFilter!);
       }
 
       // Fetch one random record
@@ -280,6 +289,9 @@ class _GameScreenState extends State<GameScreen> {
       setState(() {
         _suggestions = [];
         _showSuggestions = false;
+        _isSearchingSuggestions = false;
+        _searchStatusMessage = null;
+        _searchStatusIsError = false;
       });
       return;
     }
@@ -292,6 +304,13 @@ class _GameScreenState extends State<GameScreen> {
 
   /// Perform fuzzy search for player suggestions
   Future<void> _performSearch(String query) async {
+    setState(() {
+      _isSearchingSuggestions = true;
+      _searchStatusMessage = null;
+      _searchStatusIsError = false;
+      _showSuggestions = true;
+    });
+
     try {
       final results = await _searchService.searchPlayers(
         query,
@@ -300,13 +319,28 @@ class _GameScreenState extends State<GameScreen> {
 
       setState(() {
         _suggestions = results;
-        _showSuggestions = results.isNotEmpty;
+        _isSearchingSuggestions = false;
+
+        if (results.isEmpty) {
+          _searchStatusMessage =
+              'No players found. Try a different spelling.';
+          _searchStatusIsError = false;
+          _showSuggestions = true;
+        } else {
+          _searchStatusMessage = null;
+          _searchStatusIsError = false;
+          _showSuggestions = true;
+        }
       });
     } catch (e) {
       debugPrint('Error performing search: $e');
       setState(() {
         _suggestions = [];
-        _showSuggestions = false;
+        _isSearchingSuggestions = false;
+        _searchStatusMessage =
+            'Having trouble searching right now. Please try again.';
+        _searchStatusIsError = true;
+        _showSuggestions = true;
       });
     }
   }
@@ -316,7 +350,7 @@ class _GameScreenState extends State<GameScreen> {
   void _selectSuggestion(PlayerSearchResult suggestion) {
     setState(() {
       _answerController.text = suggestion.displayName;
-      _selectedPlayerId = suggestion.id; // Store the player's unique ID for validation
+      _selectedPlayerId = suggestion.playerId; // Store the player's unique ID for validation
       _suggestions = [];
       _showSuggestions = false;
     });
@@ -330,6 +364,9 @@ class _GameScreenState extends State<GameScreen> {
   void _hideSuggestions() {
     setState(() {
       _showSuggestions = false;
+      _isSearchingSuggestions = false;
+      _searchStatusMessage = null;
+      _searchStatusIsError = false;
     });
   }
 
@@ -470,7 +507,7 @@ class _GameScreenState extends State<GameScreen> {
     _hideSuggestions();
 
     // Get the current question's player ID for comparison
-    final correctPlayerId = _currentPlayer!['id'] as int?;
+    final correctPlayerId = _currentPlayer!['player_id'] as int?;
 
     if (correctPlayerId == null) {
       _showErrorDialog('Error: Question data is invalid.');
@@ -895,7 +932,11 @@ class _GameScreenState extends State<GameScreen> {
                             ),
                       
                       // Dropdown overlay layer - appears above all content
-                      if (_showSuggestions && _suggestions.isNotEmpty && _currentPlayer != null)
+                      if (_showSuggestions &&
+                          (_suggestions.isNotEmpty ||
+                              _isSearchingSuggestions ||
+                              _searchStatusMessage != null) &&
+                          _currentPlayer != null)
                         _buildSuggestionOverlay(),
                     ],
                   ),
@@ -1310,6 +1351,85 @@ class _GameScreenState extends State<GameScreen> {
 
   /// Build autocomplete dropdown with suggestions
   Widget _buildAutocompleteDropdown() {
+    Widget content;
+
+    if (_isSearchingSuggestions) {
+      content = _buildSearchStatusContent(
+        message: 'Searching players...',
+        showSpinner: true,
+      );
+    } else if (_searchStatusMessage != null) {
+      content = _buildSearchStatusContent(
+        message: _searchStatusMessage!,
+        icon: _searchStatusIsError ? Icons.error_outline : Icons.info_outline,
+      );
+    } else {
+      content = ListView.builder(
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        itemCount: _suggestions.length,
+        itemBuilder: (context, index) {
+          final suggestion = _suggestions[index];
+          return Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _selectSuggestion(suggestion),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  border: index < _suggestions.length - 1
+                      ? Border(
+                          bottom: BorderSide(
+                            color: Colors.white.withOpacity(0.1),
+                            width: 1,
+                          ),
+                        )
+                      : null,
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.person_outline,
+                      color: Color(0xFFFFA726),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            suggestion.displayName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          if (suggestion.secondaryLabel != null &&
+                              suggestion.secondaryLabel!.isNotEmpty)
+                            Text(
+                              suggestion.secondaryLabel!,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.6),
+                                fontSize: 12,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
     return Container(
       constraints: const BoxConstraints(maxHeight: 200),
       decoration: BoxDecoration(
@@ -1330,89 +1450,47 @@ class _GameScreenState extends State<GameScreen> {
             width: 1,
           ),
         ),
-        child: ListView.builder(
-          shrinkWrap: true,
-          padding: EdgeInsets.zero,
-          itemCount: _suggestions.length,
-          itemBuilder: (context, index) {
-            final suggestion = _suggestions[index];
-            return Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => _selectSuggestion(suggestion),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    border: index < _suggestions.length - 1
-                        ? Border(
-                            bottom: BorderSide(
-                              color: Colors.white.withOpacity(0.1),
-                              width: 1,
-                            ),
-                          )
-                        : null,
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.person_outline,
-                        color: Color(0xFFFFA726),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              suggestion.displayName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            if (suggestion.category != null &&
-                                suggestion.category!.isNotEmpty)
-                              Text(
-                                suggestion.category!,
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
-                                  fontSize: 12,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      if (suggestion.similarity != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFA726).withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${(suggestion.similarity! * 100).toStringAsFixed(0)}%',
-                            style: const TextStyle(
-                              color: Color(0xFFFFA726),
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+        child: content,
+      ),
+    );
+  }
+
+  Widget _buildSearchStatusContent({
+    required String message,
+    IconData? icon,
+    bool showSpinner = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          if (showSpinner)
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFFFFA726),
               ),
-            );
-          },
-        ),
+            )
+          else
+            Icon(
+              icon ?? Icons.info_outline,
+              color: _searchStatusIsError
+                  ? Colors.redAccent
+                  : const Color(0xFFFFA726),
+            ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

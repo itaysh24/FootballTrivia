@@ -1,11 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/auth_service.dart';
 
-class ProfileActions extends StatelessWidget {
+class ProfileActions extends StatefulWidget {
   const ProfileActions({super.key});
 
   @override
+  State<ProfileActions> createState() => _ProfileActionsState();
+}
+
+class _ProfileActionsState extends State<ProfileActions> {
+  final AuthService _authService = AuthService();
+  bool _isUpgrading = false;
+
+  Future<void> _handleSignOut() async {
+    try {
+      await _authService.signOut();
+      // AuthGate will automatically redirect to login
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error signing out: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleUpgradeAccount() async {
+    setState(() => _isUpgrading = true);
+    try {
+      final success = await _authService.upgradeGuestToGoogle();
+      if (mounted && success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account upgraded successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        setState(() {}); // Refresh to update UI
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error upgrading account: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUpgrading = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isGuest = _authService.isGuest;
+
     return Column(
       children: [
         // Main action buttons row
@@ -49,6 +105,26 @@ class ProfileActions extends StatelessWidget {
               ),
             );
           },
+        ),
+        // Guest upgrade button (only shown for guest users)
+        if (isGuest) ...[
+          const SizedBox(height: 16.0),
+          ProfileActionButton(
+            label: _isUpgrading ? "Upgrading..." : "Upgrade to Permanent Account",
+            icon: Icons.upgrade,
+            heroTag: 'Upgrade Account',
+            backgroundColor: Colors.green,
+            onPressed: _isUpgrading ? () {} : () => _handleUpgradeAccount(),
+          ),
+        ],
+        const SizedBox(height: 16.0),
+        // Sign out button
+        ProfileActionButton(
+          label: "Sign Out",
+          icon: Icons.logout,
+          heroTag: 'Sign Out',
+          backgroundColor: Colors.grey.shade700,
+          onPressed: _handleSignOut,
         ),
       ],
     );

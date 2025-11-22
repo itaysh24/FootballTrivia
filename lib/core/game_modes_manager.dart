@@ -107,7 +107,7 @@ class GameModeConfigurations {
   /// - No level system
   /// - Fetches 20 random questions from the Stars category
   /// ========================================================================
-  static GameConfiguration getCasualMode({String category = 'Stars'}) {
+  static GameConfiguration getCasualMode({String category = '2'}) {
     return GameConfiguration(
       mode: GameMode.casual,
       title: 'Casual Mode',
@@ -120,8 +120,8 @@ class GameModeConfigurations {
           // Note: order by random() requires proper SQL function support
           final response = await supabase
               .from('players')
-              .select('id, firstname, lastname, career_path, answer, Category')
-              .eq('Category', category)
+              .select('player_id, first_name, last_name, career_path, answer, league_id')
+              .eq('league_id', category)
               .limit(20);
 
           if (response.isEmpty) {
@@ -178,8 +178,8 @@ class GameModeConfigurations {
           // Fetch one random player from the specified league
           final response = await supabase
               .from('players')
-              .select('id, firstname, lastname, career_path, answer, Category')
-              .eq('Category', leagueName)
+              .select('player_id, first_name, last_name, career_path, answer, league_id')
+              .eq('league_id', leagueName)
               .limit(10); // Fetch 10 to have variety
 
           if (response.isEmpty) {
@@ -220,7 +220,7 @@ class GameModeConfigurations {
           // Fetch 50 random players from all categories
           final response = await supabase
               .from('players')
-              .select('id, firstname, lastname, career_path, answer, Category')
+              .select('player_id, first_name, last_name, career_path, answer, league_id')
               .limit(100); // Fetch more to randomize from
 
           if (response.isEmpty) {
@@ -244,7 +244,6 @@ class GameModeConfigurations {
   /// LEAGUE NAME MAPPING FOR ROAD TO GLORY
   /// ========================================================================
   /// Maps level numbers to league names.
-  /// TODO: Integrate with your existing Road to Glory progression system
   /// ========================================================================
   static String getLeagueNameForLevel(int level) {
     switch (level) {
@@ -275,7 +274,7 @@ class GameModeNavigator {
   /// Navigate to Casual Mode
   static void startCasualMode(
     BuildContext context, {
-    String category = 'Stars',
+    String category = "2",
   }) {
     final config = GameModeConfigurations.getCasualMode(category: category);
     Navigator.push(

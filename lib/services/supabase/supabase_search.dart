@@ -10,43 +10,73 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// ============================================================================
 /// Player search result model
 class PlayerSearchResult {
-  final int id;
+  final int playerId;
   final String firstName;
   final String lastName;
-  final String fullName;
+  final String answer;
   final String? careerPath;
-  final String? category;
-  final double? similarity;
+  final int? leagueId;
+  final String? fullNameWiki;
 
   PlayerSearchResult({
-    required this.id,
+    required this.playerId,
     required this.firstName,
     required this.lastName,
-    required this.fullName,
+    required this.answer,
     this.careerPath,
-    this.category,
-    this.similarity,
+    this.leagueId,
+    this.fullNameWiki,
   });
 
   /// Create PlayerSearchResult from Supabase response map
   factory PlayerSearchResult.fromMap(Map<String, dynamic> map) {
+    int parseRequiredInt(dynamic value) {
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      final parsed = int.tryParse(value?.toString() ?? '');
+      if (parsed == null) {
+        throw ArgumentError('player_id is required but was $value');
+      }
+      return parsed;
+    }
+
+    int? parseLeagueId(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      return int.tryParse(value.toString());
+    }
+
     return PlayerSearchResult(
-      id: map['id'] as int,
-      firstName: map['firstname']?.toString() ?? '',
-      lastName: map['lastname']?.toString() ?? '',
-      fullName: map['answer']?.toString() ?? '',
+      playerId: parseRequiredInt(map['player_id']),
+      firstName: map['first_name']?.toString() ?? '',
+      lastName: map['last_name']?.toString() ?? '',
+      answer: map['answer']?.toString() ?? '',
       careerPath: map['career_path']?.toString(),
-      category: map['Category']?.toString(),
-      similarity: map['similarity'] != null 
-          ? (map['similarity'] as num).toDouble() 
-          : null,
+      leagueId: parseLeagueId(map['league_id']),
+      fullNameWiki: map['full_name_wiki']?.toString(),
     );
   }
 
-  /// Get display name (fullName or combined firstName + lastName)
+  /// Display label prioritizing the answer/known name
   String get displayName {
-    if (fullName.isNotEmpty) return fullName;
-    return '$firstName $lastName'.trim();
+    if (answer.isNotEmpty) return answer;
+    final combined = '$firstName $lastName'.trim();
+    return combined.isNotEmpty ? combined : (fullNameWiki ?? '');
+  }
+
+  /// Secondary label for UI (wiki name, career path, or league identifier)
+  String? get secondaryLabel {
+    if (fullNameWiki != null && fullNameWiki!.trim().isNotEmpty) {
+      return fullNameWiki;
+    }
+    if (careerPath != null && careerPath!.trim().isNotEmpty) {
+      return careerPath;
+    }
+    if (leagueId != null) {
+      return 'League $leagueId';
+    }
+    return null;
   }
 }
 
@@ -110,10 +140,10 @@ class SupabaseSearchService {
         return [];
       }
 
-      // Convert to PlayerSearchResult objects
-      final results = data
-          .map((item) => PlayerSearchResult.fromMap(item as Map<String, dynamic>))
-          .toList();
+    // Convert to PlayerSearchResult objects
+    final results = data
+        .map((item) => PlayerSearchResult.fromMap(item as Map<String, dynamic>))
+        .toList();
 
       // Cache the results
       if (useCache) {
@@ -140,9 +170,7 @@ class SupabaseSearchService {
   /// 
   /// [query] - The user's answer
   /// [playerId] - The ID of the correct player
-  /// [threshold] - Minimum similarity score to consider a match (0.0 to 1.0)
-  /// 
-  /// Returns true if the query matches the player within the threshold
+  /// Returns true if the query matches the player by identifier
   Future<bool> isCorrectAnswer(
     String query,
     int playerId, {
@@ -151,18 +179,7 @@ class SupabaseSearchService {
     final results = await searchPlayers(query, limit: 5);
     
     // Check if any result matches the player ID
-    for (final result in results) {
-      if (result.id == playerId) {
-        // If similarity is available, check threshold
-        if (result.similarity != null) {
-          return result.similarity! >= threshold;
-        }
-        // If no similarity score, accept the match
-        return true;
-      }
-    }
-    
-    return false;
+    return results.any((result) => result.playerId == playerId);
   }
 
   /// Check if a query matches a player by name
@@ -185,17 +202,18 @@ class SupabaseSearchService {
     // Check if any result matches the correct answer
     for (final result in results) {
       final normalizedResult = result.displayName.toLowerCase().trim();
+      final normalizedAlt = '${result.firstName} ${result.lastName}'.toLowerCase().trim();
       
       // Exact or partial match
-      if (normalizedResult == normalizedCorrect ||
+      final isDirectMatch = normalizedResult == normalizedCorrect ||
           normalizedResult.contains(normalizedCorrect) ||
-          normalizedCorrect.contains(normalizedResult)) {
-        
-        // If similarity is available, check threshold
-        if (result.similarity != null) {
-          return result.similarity! >= threshold;
-        }
-        // If no similarity score, accept the match
+          normalizedCorrect.contains(normalizedResult);
+      final isAltMatch = normalizedAlt.isNotEmpty &&
+          (normalizedAlt == normalizedCorrect ||
+              normalizedAlt.contains(normalizedCorrect) ||
+              normalizedCorrect.contains(normalizedAlt));
+      
+      if (isDirectMatch || isAltMatch) {
         return true;
       }
     }
